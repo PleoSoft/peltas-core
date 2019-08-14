@@ -1,0 +1,24 @@
+# This is a sample build configuration for Java (Maven).
+# Check our guides at https://confluence.atlassian.com/x/zd-5Mw for more examples.
+# Only use spaces to indent your .yml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: maven:3.3.9
+
+pipelines:
+  custom:
+    build:
+      - step:
+          caches:
+            - maven
+          script: # Modify the commands below to build your repository.
+            - mvn -B clean install  # -B batch mode makes Maven less verbose
+    deploy:
+      - step:
+          caches:
+            - maven
+          script: # Modify the commands below to build your repository.
+            - (echo $RELEASE_GPG_ENC | base64 --decode > ~/private-key.gpg.enc)
+            - openssl aes-256-cbc -pass pass:$OPENSSL_PWD -in ~/private-key.gpg.enc -out private-key.gpg -d
+            - gpg --import private-key.gpg
+            - mvn -V -B -s settings.xml deploy -DaltDeploymentRepository=ossrh::default::https://oss.sonatype.org/service/local/staging/deploy/maven2
