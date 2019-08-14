@@ -18,12 +18,13 @@ package io.peltas.alfresco.access;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -32,8 +33,9 @@ import io.peltas.alfresco.config.PeltastTestConfig;
 import io.peltas.core.alfresco.PeltasEntry;
 import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
 
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
 @TestPropertySource(locations = "classpath:peltas-test.properties")
-@RunWith(SpringRunner.class)
 @ContextConfiguration(classes = PeltastTestConfig.class)
 public class PeltasEvaluatorTest {
 

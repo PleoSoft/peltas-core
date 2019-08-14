@@ -29,22 +29,23 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -60,8 +61,9 @@ import io.peltas.core.alfresco.integration.PeltasHandler;
 import io.peltas.core.batch.PeltasDataHolder;
 import io.peltas.core.batch.PeltasJdbcBatchWriter;
 
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
 @TestPropertySource(locations = "classpath:peltas-executions-collection.properties")
-@RunWith(SpringRunner.class)
 @ContextConfiguration(classes = PeltastTestConfig.class)
 public class PeltasExecutionsCollectionsTest {
 
@@ -71,7 +73,7 @@ public class PeltasExecutionsCollectionsTest {
 	@Mock
 	NamedParameterJdbcTemplate jdbcTemplate;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		doAnswer(new Answer<Map<String, Object>>() {
 			@Override

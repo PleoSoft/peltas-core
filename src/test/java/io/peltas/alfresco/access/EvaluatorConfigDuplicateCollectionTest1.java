@@ -16,27 +16,32 @@
 
 package io.peltas.alfresco.access;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.peltas.alfresco.config.PeltastTestConfig;
 import io.peltas.core.alfresco.PeltasException;
 import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
 
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
 @TestPropertySource(locations = "classpath:peltas-evaluator-config-duplicates-collection-test1.properties")
-@RunWith(SpringRunner.class)
 @ContextConfiguration(classes = PeltastTestConfig.class)
 public class EvaluatorConfigDuplicateCollectionTest1 {
 
 	@Autowired
 	PeltasHandlerConfigurationProperties pipeline;
 
-	@Test(expected = PeltasException.class)
+	@Test
 	public void givenWrongConfiguration_peltasExcpetionsShouldBeThrown() {
-		pipeline.getEvaluatorConfigurationOccurencies();
+		Assertions.assertThrows(PeltasException.class, () -> {
+			pipeline.getEvaluatorConfigurationOccurencies();
+		});
 	}
 }

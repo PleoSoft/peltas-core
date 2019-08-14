@@ -39,7 +39,6 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.util.StringUtils;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
 import io.peltas.core.alfresco.PeltasEntry;
@@ -89,7 +88,7 @@ public class PeltasHandler {
 					return new SimpleDateFormat(format, Locale.ENGLISH).parse(source);
 				} catch (final ParseException e) {
 					if (StringUtils.hasText(initialFormat)) {
-						throw Throwables.propagate(e);
+						throw new PeltasConversionException(e);
 					}
 					format = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"; // v1
 					try {
@@ -101,7 +100,7 @@ public class PeltasHandler {
 							LOGGER.trace("converting String -> Date: {} with format: {}", source, format);
 							return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").parse(source);
 						} catch (final ParseException e2) {
-							throw Throwables.propagate(e1);
+							throw new PeltasConversionException(e2);
 						}
 					}
 				}
@@ -158,7 +157,7 @@ public class PeltasHandler {
 			LOGGER.debug("handle() properties mapped {}", mappedProperties);
 			return new PeltasDataHolder(auditEntry, configuredProperties, mappedProperties, config);
 		} catch (final Throwable e) {
-			throw Throwables.propagate(e);
+			throw new PeltasConversionException(e);
 		}
 
 	}
@@ -222,7 +221,6 @@ public class PeltasHandler {
 		convertValue(value, builder, key, expresionProperty);
 	}
 
-	@SuppressWarnings("unchecked")
 	private void convertValue(Object value, Map<String, Object> builder, String key,
 			PeltasExpresionProperty expresionProperty) {
 		if (value == null) {

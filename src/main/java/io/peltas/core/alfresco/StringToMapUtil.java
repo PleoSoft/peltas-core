@@ -77,7 +77,7 @@ public class StringToMapUtil {
 						// it is an object => map
 						// find the end '}'
 						int end = findMapValue(formated, i, MAP_BEGIN, MAP_END);
-						value = formated.substring(i, ++end);
+						value = formated.substring(i, ++end).trim();
 						i = end;
 //						if (ObjectUtils.isEmpty(value)) {
 //							// not an object find the first delimiter
@@ -94,7 +94,7 @@ public class StringToMapUtil {
 						// find the end ']'
 
 						int end = findMapValue(formated, i, ARRAY_BEGIN, ARRAY_END);
-						value = formated.substring(i, ++end);
+						value = formated.substring(i, ++end).trim();
 
 						i = end;
 						// value = stringToMap(v, delimiter);
@@ -107,12 +107,12 @@ public class StringToMapUtil {
 						// find the end ','
 
 						int end = findMapValue(formated, i, ' ', delimiter);
-						value = formated.substring(i, end++);
+						value = formated.substring(i, end++).trim();
 						i = end;
 					}
 
-					if (value == null) {
-						throw new RuntimeException("value not found for: " + key);
+					if ("null".equals(value)) {
+						value = null;
 					}
 
 					map.put(key.trim(), value);
@@ -161,16 +161,14 @@ public class StringToMapUtil {
 	}
 
 	/**
-	 * 
-	 * @deprecated
+	 * TODO: should be refactored during the changes of arrays/object(map) handling
 	 */
 	static public List<Object> valueAsList(final Object value) {
 		return valueAsList(value, ',');
 	}
 
 	/**
-	 * 
-	 * @deprecated
+	 * TODO: should be refactored during the changes of arrays/object(map) handling
 	 */
 	static public List<Object> valueAsList(final Object value, final char delimiter) {
 		if (value == null || "null".equals(value)) {

@@ -21,19 +21,21 @@ import static org.junit.Assert.assertNull;
 
 import java.util.List;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.MultiValueMap;
 
 import io.peltas.alfresco.config.PeltastTestConfig;
 import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
 
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
 @TestPropertySource(locations = "classpath:peltas-evaluator-config-collection-test.properties")
-@RunWith(SpringRunner.class)
 @ContextConfiguration(classes = PeltastTestConfig.class)
 public class EvaluatorConfigCollectionTest {
 
