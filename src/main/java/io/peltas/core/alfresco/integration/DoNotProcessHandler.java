@@ -29,7 +29,7 @@ public class DoNotProcessHandler {
 
 	@ServiceActivator(inputChannel = "donotprocess")
 	public Object handle(Message<PeltasEntry> message) {
-		LOGGER.debug("handle() on donotprocess channel {}", message.getPayload());
+		LOGGER.debug("handle() on donotprocess channel - Entry ID: {}", message.getPayload().getId());
 		return new NotProcessableEntry();
 	}
 

@@ -16,10 +16,15 @@
 
 package io.peltas.core.alfresco.config;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,16 +33,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.core.io.Resource;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 
 import io.peltas.core.alfresco.PeltasEntry;
@@ -58,9 +63,35 @@ public class PeltasHandlerConfigurationProperties {
 
 	private final EvaluatorExpressionRegistry registry;
 
-	@Autowired
-	public PeltasHandlerConfigurationProperties(EvaluatorExpressionRegistry registry) {
+	private final Map<String, Map<String, String>> mappedExecutionsConfigResources;
+
+	public PeltasHandlerConfigurationProperties(EvaluatorExpressionRegistry registry, Resource[] resources) {
 		this.registry = registry;
+
+		this.mappedExecutionsConfigResources = new HashMap<>();
+
+		try {
+			for (Resource resource : resources) {
+				String filename = resource.getFilename();
+				String configKey = StringUtils.getFilenameExtension(filename);
+				if(!StringUtils.hasText(configKey)) {
+					continue;
+				}
+				
+				String key = filename.substring(0, filename.length() - configKey.length() - 1);
+				
+				Map<String, String> config = new HashMap<>();				
+				try (InputStream is = resource.getInputStream()) {
+					String configValue = FileCopyUtils.copyToString(new InputStreamReader(is));
+					
+					config.put(configKey, configValue);
+				}
+				
+				this.mappedExecutionsConfigResources.put(key, config);
+			}				
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		} 
 	}
 
 	public void setHandler(Map<String, PeltasHandlerProperties> handler) {
@@ -80,29 +111,15 @@ public class PeltasHandlerConfigurationProperties {
 	public PipelineExecution getPipelineExecution(final String key) {
 		PipelineExecution pipelineExecution = executionConfigurationMap.get(key);
 		if (pipelineExecution == null) {
-			try {
-				File[] listFiles = ResourceUtils.getFile("classpath:io/peltas/executions/" + key)
-						.listFiles(new FilenameFilter() {
-
-							@Override
-							public boolean accept(File dir, String name) {
-								return StringUtils.startsWithIgnoreCase(name, key);
-							}
-						});
-
-				Map<String, String> config = new HashMap<>();
-				for (File file : listFiles) {
-					String configKey = StringUtils.getFilenameExtension(file.getName());
-					String configValue = FileCopyUtils.copyToString(new FileReader(file));
-					config.put(configKey, configValue);
-				}
-
-				pipelineExecution = new PipelineExecution();
-				pipelineExecution.setConfig(config);
-				executionConfigurationMap.put(key, pipelineExecution);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
+			pipelineExecution = new PipelineExecution();
+			
+			Map<String, String> config = this.mappedExecutionsConfigResources.get(key);
+			if(config == null) {
+				LOGGER.error("execution configuration is not found for: {}. Verify your execution folders and files!", key);	
 			}
+			
+			pipelineExecution.setConfig(config);
+			executionConfigurationMap.put(key, pipelineExecution);
 		}
 		return pipelineExecution;
 	}
@@ -205,8 +222,7 @@ public class PeltasHandlerConfigurationProperties {
 			}
 		}
 
-		Entry<String, List<String>> lastError = null;
-
+//		Entry<String, List<String>> lastError = null;
 		// Set<Entry<String, List<String>>> mergedConfig = all.entrySet();
 		// for (Entry<String, List<String>> entry : mergedConfig) {
 		// List<String> evaluators = entry.getValue();

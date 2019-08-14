@@ -22,13 +22,11 @@ import static org.junit.Assert.assertNull;
 import java.io.FileReader;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.match.MockRestRequestMatchers;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
@@ -37,7 +35,6 @@ import org.springframework.util.ResourceUtils;
 import org.springframework.web.client.RestTemplate;
 
 //@TestPropertySource(locations = "classpath:application.properties")
-@RunWith(SpringRunner.class)
 public class AbstractPeltasRestReaderTest {
 
 	private MockRestServiceServer mockServer;
@@ -47,7 +44,7 @@ public class AbstractPeltasRestReaderTest {
 
 	private AbstractPeltasRestReader<TestData, TestDataResponse> reader;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		final RestTemplate restTemplate = new RestTemplate();
 		mockServer = MockRestServiceServer.createServer(restTemplate);

@@ -35,6 +35,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.classify.Classifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -58,7 +59,7 @@ import io.peltas.core.config.EnablePeltasInMemory;
 import io.peltas.core.repository.PeltasTimestampRepository;
 
 @PropertySource(ignoreResourceNotFound = true, value = { "classpath:io/peltas/peltas.properties" })
-// @Aspect
+// @Aspect FIXME: check pointcut for stopping
 @EnablePeltasInMemory
 public abstract class AbstractAlfrescoPeltasConfiguration
 		extends AbstractPeltasConfiguration<PeltasEntry, PeltasDataHolder> implements InitializingBean {
@@ -81,6 +82,9 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 
 	@Value("${peltas.chunksize}")
 	protected Integer chunkSize;
+	
+	@Value("classpath:io/peltas/executions/**") 
+	private Resource[] resources;
 
 	private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
@@ -108,7 +112,7 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 
 	@Bean(initMethod = "checkEvaluatorConfigurationOccurencies")
 	public PeltasHandlerConfigurationProperties alfrescoHandlerProperties() {
-		return new PeltasHandlerConfigurationProperties(evaluatorExpressionRegistry());
+		return new PeltasHandlerConfigurationProperties(evaluatorExpressionRegistry(), resources);
 	}
 
 	@Bean
