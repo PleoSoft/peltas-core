@@ -20,8 +20,6 @@ import org.springframework.batch.core.configuration.annotation.AbstractBatchConf
 import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.ModularBatchConfiguration;
-import org.springframework.batch.core.configuration.annotation.SimpleBatchConfiguration;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.explore.support.MapJobExplorerFactoryBean;
@@ -31,11 +29,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.AnnotationAttributes;
@@ -45,9 +39,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.util.Assert;
 
 @Configuration
-@AutoConfigureAfter({ DataSourceTransactionManagerAutoConfiguration.class, HibernateJpaAutoConfiguration.class,
-		TransactionAutoConfiguration.class, SimpleBatchConfiguration.class, ModularBatchConfiguration.class,
-		AbstractBatchConfiguration.class })
 public class PeltasInMemoryConfiguration extends AbstractBatchConfiguration
 		implements BatchConfigurer, InitializingBean {
 

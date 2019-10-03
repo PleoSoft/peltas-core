@@ -70,7 +70,7 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 
 	@Override
 	protected void onItemSkipped(PeltasEntry item, PeltasDataHolder holder) {
-		System.out.println(counter.get());
+		LOGGER.info("Processor skipped ID {}", item.getId());
 	}
 
 	@Override

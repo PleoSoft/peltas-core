@@ -30,6 +30,7 @@ public class PeltasProperties {
 	private String loginUrl = "alfresco/service/api/login";
 	private String application = "alfresco-access";
 	private String noMatchHandler = "donotprocess";
+	private String timestamp = "database";
 
 	private AuthenticationType authenticationtype = AuthenticationType.basicauth;
 
@@ -99,6 +100,14 @@ public class PeltasProperties {
 
 	public void setAuth(Authentication auth) {
 		this.auth = auth;
+	}
+	
+	public String getTimestamp() {
+		return timestamp;
+	}
+	
+	public void setTimestamp(String timestamp) {
+		this.timestamp = timestamp;
 	}
 
 	public static class Ssl {

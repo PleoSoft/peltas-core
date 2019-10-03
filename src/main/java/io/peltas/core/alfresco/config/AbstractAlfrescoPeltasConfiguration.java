@@ -17,21 +17,16 @@
 package io.peltas.core.alfresco.config;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.support.builder.ClassifierCompositeItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.classify.Classifier;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.messaging.core.GenericMessagingTemplate;
 
 import io.peltas.core.alfresco.PeltasEntry;
@@ -43,18 +38,14 @@ import io.peltas.core.alfresco.config.expression.EvaluatorExpressionRegistry;
 import io.peltas.core.alfresco.integration.DoNotProcessHandler;
 import io.peltas.core.alfresco.integration.PeltasHandler;
 import io.peltas.core.alfresco.integration.PeltasRouter;
-import io.peltas.core.batch.EmptyItemWriter;
 import io.peltas.core.batch.ItemRouter;
 import io.peltas.core.batch.PeltasDataHolder;
 import io.peltas.core.batch.PeltasItemProcessor;
 import io.peltas.core.batch.PeltasProcessor;
 import io.peltas.core.config.AbstractPeltasBatchConfiguration;
-import io.peltas.core.config.EnablePeltasInMemory;
 import io.peltas.core.repository.TxDataRepository;
 
-@PropertySource(ignoreResourceNotFound = true, value = { "classpath:io/peltas/peltas.properties" })
 // @Aspect FIXME: check pointcut for stopping
-@EnablePeltasInMemory
 public abstract class AbstractAlfrescoPeltasConfiguration
 		extends AbstractPeltasBatchConfiguration<PeltasEntry, PeltasDataHolder> {
 
@@ -73,9 +64,6 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 
 	@Autowired
 	protected TxDataRepository dataRepository;
-
-	@Autowired
-	protected ItemWriter<PeltasDataHolder> itemWriter;
 
 	public String alfrescoAuditApplication() {
 		return alfrescoAuditProperties().getApplication();
@@ -129,26 +117,26 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 		return new PeltasRouter(alfrescoHandlerProperties(), alfrescoAuditProperties(), false);
 	}
 
-	@Override
-	public ItemWriter<PeltasDataHolder> writer() {
-
-		Classifier<PeltasDataHolder, ItemWriter<? super PeltasDataHolder>> classifier1 = new Classifier<PeltasDataHolder, ItemWriter<? super PeltasDataHolder>>() {
-			private static final long serialVersionUID = 4361778429527541028L;
-
-			@Override
-			public ItemWriter<? super PeltasDataHolder> classify(final PeltasDataHolder classifiable) {
-				PeltasHandlerProperties config = classifiable.getConfig();
-				List<String> pipeline = config.getPipeline().getExecutions();
-				if (pipeline == null || pipeline.size() == 0) {
-					return new EmptyItemWriter<>();
-				}
-
-				return itemWriter;
-			}
-		};
-
-		return new ClassifierCompositeItemWriterBuilder<PeltasDataHolder>().classifier(classifier1).build();
-	}
+//	@Override
+//	public PeltasItemWriter<?, ?> writer() {
+//
+//		Classifier<PeltasDataHolder, PeltasItemWriter<I, C>> classifier1 = new Classifier<PeltasDataHolder, PeltasItemWriter<I, C>>() {
+//			private static final long serialVersionUID = 4361778429527541028L;
+//
+//			@Override
+//			public PeltasItemWriter<?, ?> classify(final PeltasDataHolder classifiable) {
+//				PeltasHandlerProperties config = classifiable.getConfig();
+//				List<String> pipeline = config.getPipeline().getExecutions();
+//				if (pipeline == null || pipeline.size() == 0) {
+//					return new EmptyItemWriter<>();
+//				}
+//
+//				return itemWriter;
+//			}
+//		};
+//
+//		return new ClassifierCompositeItemWriterBuilder<PeltasDataHolder>().classifier(classifier1).build();
+//	}
 
 	@Bean
 	public DoNotProcessHandler doNotProcessHandler() {

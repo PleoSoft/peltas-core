@@ -18,6 +18,8 @@ package io.peltas.core.config;
 
 import java.util.Date;
 
+import javax.sql.DataSource;
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
@@ -32,8 +34,10 @@ import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
@@ -43,10 +47,11 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.util.StringUtils;
 
-import io.peltas.core.batch.EmptyItemWriter;
 import io.peltas.core.batch.ItemRouter;
 import io.peltas.core.batch.PeltasItemProcessor;
 import io.peltas.core.batch.PeltasListener;
+import io.peltas.core.repository.database.CustomDatasourceInitializer;
+import io.peltas.core.repository.database.CustomDatasourceProperties;
 import io.peltas.core.repository.database.PeltasTimestamp;
 
 @Configuration
@@ -68,6 +73,9 @@ public abstract class AbstractPeltasBatchConfiguration<I, O> {
 
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
+
+	@Autowired
+	private ItemWriter<O> writer;
 
 	@Bean
 	public GenericMessagingTemplate messagingTemplate(BeanFactory beanFactory) {
@@ -109,7 +117,7 @@ public abstract class AbstractPeltasBatchConfiguration<I, O> {
 	@Bean
 	public Job job() throws Exception {
 		return jobBuilderFactory.get("peltas.entry").repository(jobRepository).start(
-				step(jobRepository, stepBuilderFactory, platformTransactionManager, writer(), processor(), listener()))
+				step(jobRepository, stepBuilderFactory, platformTransactionManager, writer, processor(), listener()))
 				.build();
 	}
 
@@ -126,10 +134,6 @@ public abstract class AbstractPeltasBatchConfiguration<I, O> {
 	public IntegrationFlow flow() {
 		ItemRouter<I> actionRouter = router();
 		return IntegrationFlows.from("peltas.entry").route(actionRouter, "handleMessage").get();
-	}
-
-	public ItemWriter<O> writer() {
-		return new EmptyItemWriter<>();
 	}
 
 	protected int getChunkSize() {
@@ -159,4 +163,19 @@ public abstract class AbstractPeltasBatchConfiguration<I, O> {
 		return run;
 	}
 
+	@Configuration
+	@ConditionalOnProperty(name = "peltas.custom.datasource.enabled", havingValue = "true")
+	public class CustomDatasourceConfiguration {
+
+		@Bean
+		public CustomDatasourceProperties peltasCustomDatasourceProperties() {
+			return new CustomDatasourceProperties();
+		}
+
+		@Bean
+		public CustomDatasourceInitializer peltasCustomDatasourceInitializer(DataSource dataSource,
+				ResourceLoader resourceLoader) {
+			return new CustomDatasourceInitializer(dataSource, resourceLoader, peltasCustomDatasourceProperties());
+		}
+	}
 }
