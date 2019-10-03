@@ -36,6 +36,7 @@ public class MessageContextItemWriter<T> implements ItemWriter<T>, ItemStream {
 		this.delegate = delegate;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void write(List<? extends T> items) throws Exception {
 		for (T item : items) {

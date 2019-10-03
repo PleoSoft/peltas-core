@@ -83,6 +83,7 @@ public class TicketBasicAuthorizationInterceptor implements ClientHttpRequestInt
 		return response;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void authenticate(ClientHttpRequestExecution execution)
 			throws IOException, JsonParseException, JsonMappingException {
 
@@ -130,9 +131,6 @@ public class TicketBasicAuthorizationInterceptor implements ClientHttpRequestInt
 		} catch (final URISyntaxException e) {
 			throw new IllegalStateException(e);
 		} finally {
-			// Need to close unauthorized response since it is not returned to
-			// and will not be closed by
-			// RestTemplate.doExecute()
 			if (response != null) {
 				response.close();
 			}

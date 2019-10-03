@@ -26,6 +26,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonSerialize
 public class PeltasEntry implements Serializable {
 
+	private static final long serialVersionUID = -3279850839274915825L;
+
 	@JsonAlias({ "id" })
 	private String id;
 

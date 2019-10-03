@@ -304,6 +304,7 @@ public class PeltasHandler {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public static Object getMappedSingleValueProperty(String value, PeltasEntry auditEntry) {
 		LOGGER.trace("getMappedSingleValueProperty() retreiving {} from {}", value, auditEntry);
 
