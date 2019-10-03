@@ -30,24 +30,29 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.SimpleStepBuilder;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.core.GenericMessagingTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.util.StringUtils;
 
 import io.peltas.core.batch.EmptyItemWriter;
 import io.peltas.core.batch.ItemRouter;
 import io.peltas.core.batch.PeltasItemProcessor;
 import io.peltas.core.batch.PeltasListener;
-import io.peltas.core.repository.PeltasTimestamp;
+import io.peltas.core.repository.database.PeltasTimestamp;
 
 @Configuration
-public abstract class AbstractPeltasConfiguration<I, O> {
+@EnableIntegration
+@EnableTransactionManagement
+public abstract class AbstractPeltasBatchConfiguration<I, O> {
 
 	@Autowired
 	private JobLauncher jobLauncher;
@@ -63,9 +68,13 @@ public abstract class AbstractPeltasConfiguration<I, O> {
 
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
-
-	@Autowired
-	private GenericMessagingTemplate messagingTemplate;
+	
+	@Bean
+	public GenericMessagingTemplate messagingTemplate(BeanFactory beanFactory) {
+		GenericMessagingTemplate template = new GenericMessagingTemplate();
+		template.setBeanFactory(beanFactory);
+		return template;
+	}
 
 	@Bean
 	public ItemRouter<I> router() {
@@ -81,10 +90,7 @@ public abstract class AbstractPeltasConfiguration<I, O> {
 	abstract public ItemReader<I> reader();
 
 	@Bean
-	public PeltasItemProcessor<I, O> processor() {
-		return new PeltasItemProcessor<I, O>(messagingTemplate) {
-		};
-	}
+	abstract public PeltasItemProcessor<I, O> processor();
 
 	@Bean
 	public PeltasListener<I, O> listener() {
@@ -136,7 +142,7 @@ public abstract class AbstractPeltasConfiguration<I, O> {
 
 	protected JobExecution startJob(JobParameters jobParameters, JobRepository jobRepository,
 			JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory,
-			PlatformTransactionManager platformTransactionManager, GenericMessagingTemplate messagingTemplate) {
+			PlatformTransactionManager platformTransactionManager) {
 		try {
 			JobExecution run = jobLauncher.run(job(), jobParameters);
 			return run;
@@ -149,7 +155,7 @@ public abstract class AbstractPeltasConfiguration<I, O> {
 
 	public JobExecution launchJob() {
 		JobExecution run = startJob(getJobParameters(), jobRepository, jobBuilderFactory, stepBuilderFactory,
-				platformTransactionManager, messagingTemplate);
+				platformTransactionManager);
 		return run;
 	}
 

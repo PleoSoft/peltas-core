@@ -14,14 +14,25 @@
  * limitations under the License.
  */
 
-package io.peltas.core.repository;
+package io.peltas.core.repository.database;
 
-import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.data.repository.query.Param;
-import org.springframework.transaction.annotation.Transactional;
+import io.peltas.core.repository.TxDataRepository;
 
-@Transactional
-public interface PeltasTimestampRepository extends PagingAndSortingRepository<PeltasTimestamp, String> {
+public class JpaTxDataWriter implements TxDataRepository {
 
-	PeltasTimestamp findTopByApplicationNameOrderByAccessDesc(@Param("applicationName") String applicationName);
+	final private PeltasTimestampRepository repository;
+
+	public JpaTxDataWriter(PeltasTimestampRepository repository) {
+		this.repository = repository;
+	}
+
+	@Override
+	public PeltasTimestamp writeTx(PeltasTimestamp ts) {
+		return repository.save(ts);
+	}
+
+	@Override
+	public PeltasTimestamp readTx(String applicationName) {
+		return repository.findTopByApplicationNameOrderByAccessDesc(applicationName);
+	}
 }

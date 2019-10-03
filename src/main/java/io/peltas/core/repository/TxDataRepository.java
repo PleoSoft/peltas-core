@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package io.peltas.core.config;
+package io.peltas.core.repository;
 
-import org.springframework.context.annotation.Import;
+import io.peltas.core.repository.database.PeltasTimestamp;
 
-@Import({ PeltasInMemoryConfiguration.class })
-public @interface EnablePeltasInMemory {
+public interface TxDataRepository {
 
+	PeltasTimestamp writeTx(PeltasTimestamp ts);
+	
+	PeltasTimestamp readTx(String applicationName);
 }

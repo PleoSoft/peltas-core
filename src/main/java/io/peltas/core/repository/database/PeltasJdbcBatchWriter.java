@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package io.peltas.core.batch;
+package io.peltas.core.repository.database;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,30 +29,57 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.core.io.Resource;
 import org.springframework.integration.transformer.ObjectToMapTransformer;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
+import org.springframework.util.FileCopyUtils;
+import org.springframework.util.StringUtils;
 
 import com.google.common.collect.ImmutableMap;
 
 import io.peltas.core.alfresco.PeltasEntry;
-import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
 import io.peltas.core.alfresco.config.PipelineCollection;
-import io.peltas.core.alfresco.config.PipelineExecution;
+import io.peltas.core.batch.PeltasDataHolder;
 
 public class PeltasJdbcBatchWriter implements ItemWriter<PeltasDataHolder> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PeltasJdbcBatchWriter.class);
 
-	private final PeltasHandlerConfigurationProperties properties;
 	private final NamedParameterJdbcOperations namedParameterJdbcTemplate;
 
-	public PeltasJdbcBatchWriter(NamedParameterJdbcTemplate template, PeltasHandlerConfigurationProperties properties) {
-		this.properties = properties;
+	private final Map<String, String> mappedExecutionsConfigResources;
+
+	public PeltasJdbcBatchWriter(NamedParameterJdbcTemplate template, Resource[] resources) {
 		this.namedParameterJdbcTemplate = template;
+
+		this.mappedExecutionsConfigResources = new HashMap<>();
+
+		try {
+			for (Resource resource : resources) {
+				String filename = resource.getFilename();
+				String configKey = StringUtils.getFilenameExtension(filename);
+				if (!"sql".equals(configKey)) {
+					continue;
+				}
+
+				String key = filename.substring(0, filename.length() - configKey.length() - 1);
+
+				// Map<String, String> config = new HashMap<>();
+				try (InputStream is = resource.getInputStream()) {
+					String configValue = FileCopyUtils.copyToString(new InputStreamReader(is));
+
+					// config.put(configKey, configValue);
+					this.mappedExecutionsConfigResources.put(key, configValue);
+				}
+
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -59,14 +88,10 @@ public class PeltasJdbcBatchWriter implements ItemWriter<PeltasDataHolder> {
 		for (PeltasDataHolder item : items) {
 			MapSqlParameterSource parameterSourceMap = createSqlParameterSource(item);
 
-			LinkedHashMap<String, PipelineExecution> pipelineMap = properties
-					.asPipelineExecutions(item.getConfig().getPipeline().getExecutions());
-			Set<Entry<String, PipelineExecution>> pipelines = pipelineMap.entrySet();
-			for (Entry<String, PipelineExecution> entry : pipelines) {
-				PipelineExecution pipelineExecution = entry.getValue();
-				String executionKey = entry.getKey();
+			List<String> executions = item.getConfig().getPipeline().getExecutions();
 
-				String sql = pipelineExecution.getConfigValue("sql");
+			for (String executionKey : executions) {
+				String sql = mappedExecutionsConfigResources.get(executionKey);
 				Map<String, Object> sqlResult = namedParameterJdbcTemplate.queryForMap(sql, parameterSourceMap);
 				addSources(executionKey, parameterSourceMap, sqlResult);
 
@@ -84,7 +109,7 @@ public class PeltasJdbcBatchWriter implements ItemWriter<PeltasDataHolder> {
 					String collectionKey = collectionEntry.getKey();
 
 					PipelineCollection pipelineCollection = collectionEntry.getValue();
-					List<String> executions = pipelineCollection.getExecutions();
+					List<String> collectionExecutions = pipelineCollection.getExecutions();
 
 					Collection<Object> collectionValueList = (Collection<Object>) item.getBuilder().get(collectionKey);
 
@@ -105,13 +130,11 @@ public class PeltasJdbcBatchWriter implements ItemWriter<PeltasDataHolder> {
 								collectionSqlMapsource.addValue(collectionKey, collectionValue);
 							}
 
-							for (String execution : executions) {
-								PipelineExecution executionCollection = properties.getPipelineExecution(execution);
-
-								String collectionSql = executionCollection.getConfigValue("sql");
+							for (String executionKey : collectionExecutions) {
+								String collectionSql = mappedExecutionsConfigResources.get(executionKey);
 								Map<String, Object> sqlResult = namedParameterJdbcTemplate.queryForMap(collectionSql,
 										collectionSqlMapsource);
-								addSources(execution, collectionSqlMapsource, sqlResult);
+								addSources(executionKey, collectionSqlMapsource, sqlResult);
 								if (LOGGER.isTraceEnabled()) {
 									LOGGER.trace("doWithItem() executing collection sql in batch: {}", collectionSql);
 								}

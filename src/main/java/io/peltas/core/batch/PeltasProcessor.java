@@ -29,8 +29,9 @@ import org.springframework.messaging.support.MessageBuilder;
 import io.peltas.core.alfresco.PeltasEntry;
 import io.peltas.core.alfresco.config.PeltasHandlerProperties;
 import io.peltas.core.alfresco.integration.DoNotProcessMarker;
-import io.peltas.core.repository.PeltasTimestamp;
-import io.peltas.core.repository.PeltasTimestampRepository;
+import io.peltas.core.repository.TxDataRepository;
+import io.peltas.core.repository.database.PeltasTimestamp;
+import io.peltas.core.repository.database.PeltasTimestampRepository;
 
 public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasDataHolder> {
 
@@ -39,12 +40,12 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 	public static final String ID_SEPARATOR = "___";
 
 	private final String applicationName;
-	private final PeltasTimestampRepository auditRepository;
+	private final TxDataRepository auditRepository;
 	private final AtomicInteger counter = new AtomicInteger(0);
 	private PeltasEntry lastAuditEntry;
 
 	public PeltasProcessor(String applicationName, GenericMessagingTemplate template,
-			PeltasTimestampRepository auditRepository) {
+			TxDataRepository auditRepository) {
 		super(template);
 		this.applicationName = applicationName;
 		this.auditRepository = auditRepository;
@@ -67,6 +68,11 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 	protected void onItemProcessed(PeltasEntry item, PeltasDataHolder holder) {
 		counter.incrementAndGet();
 	}
+	
+	@Override
+	protected void onItemSkipped(PeltasEntry item, PeltasDataHolder holder) {
+		System.out.println(counter.get());
+	}
 
 	@Override
 	protected void onBeforeProcess(PeltasEntry item) {
@@ -75,14 +81,16 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 
 	@Override
 	public void onBeforeChunk(ChunkContext context) {
-		PeltasTimestamp timestamp = auditRepository.findTopByApplicationNameOrderByAccessDesc(applicationName);
+		PeltasTimestamp timestamp = auditRepository.readTx(applicationName);
 		if (timestamp != null) {
 			String[] auditIdSplitted = timestamp.getRef().split(ID_SEPARATOR);
 			Integer nodesCount = nodesCountToInteger(auditIdSplitted[1]);
 			checkNodesCount(nodesCount);
 		}
 
-		counter.set(0);
+		if(counter.get() == 0) {
+		  counter.set(0);
+		}
 	}
 
 	protected void checkNodesCount(Integer nodesCount) {
@@ -104,7 +112,7 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 		String newRef = getCurrentRef() + ID_SEPARATOR + nodesCountToString(processed);
 		timestamp.setRef(newRef);
 		PeltasTimestamp peltasTimestamp;
-		peltasTimestamp = auditRepository.save(timestamp);
+		peltasTimestamp = auditRepository.writeTx(timestamp);
 		currentChunkContext.setAttribute("peltasTimestamp", peltasTimestamp);
 	}
 

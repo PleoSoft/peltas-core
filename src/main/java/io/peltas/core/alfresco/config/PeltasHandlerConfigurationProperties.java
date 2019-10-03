@@ -16,31 +16,18 @@
 
 package io.peltas.core.alfresco.config;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.core.io.Resource;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
@@ -59,39 +46,11 @@ public class PeltasHandlerConfigurationProperties {
 	private final Map<String, String> evaluatorsMap = new HashMap<>();
 	private final LinkedMultiValueMap<String, String> shaMap = new LinkedMultiValueMap<>();
 	private final Map<String, PeltasHandlerProperties> handlerConfigurationMap = new HashMap<>();
-	private final Map<String, PipelineExecution> executionConfigurationMap = new HashMap<>();
 
 	private final EvaluatorExpressionRegistry registry;
 
-	private final Map<String, Map<String, String>> mappedExecutionsConfigResources;
-
-	public PeltasHandlerConfigurationProperties(EvaluatorExpressionRegistry registry, Resource[] resources) {
+	public PeltasHandlerConfigurationProperties(EvaluatorExpressionRegistry registry) {
 		this.registry = registry;
-
-		this.mappedExecutionsConfigResources = new HashMap<>();
-
-		try {
-			for (Resource resource : resources) {
-				String filename = resource.getFilename();
-				String configKey = StringUtils.getFilenameExtension(filename);
-				if(!StringUtils.hasText(configKey)) {
-					continue;
-				}
-				
-				String key = filename.substring(0, filename.length() - configKey.length() - 1);
-				
-				Map<String, String> config = new HashMap<>();				
-				try (InputStream is = resource.getInputStream()) {
-					String configValue = FileCopyUtils.copyToString(new InputStreamReader(is));
-					
-					config.put(configKey, configValue);
-				}
-				
-				this.mappedExecutionsConfigResources.put(key, config);
-			}				
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		} 
 	}
 
 	public void setHandler(Map<String, PeltasHandlerProperties> handler) {
@@ -102,26 +61,6 @@ public class PeltasHandlerConfigurationProperties {
 			String evaluator = entry.getValue().getEvaluator();
 			addEvaluator(evaluator, entry.getKey());
 		}
-	}
-
-	public void setExecution(Map<String, PipelineExecution> executions) {
-		executionConfigurationMap.putAll(executions);
-	}
-
-	public PipelineExecution getPipelineExecution(final String key) {
-		PipelineExecution pipelineExecution = executionConfigurationMap.get(key);
-		if (pipelineExecution == null) {
-			pipelineExecution = new PipelineExecution();
-			
-			Map<String, String> config = this.mappedExecutionsConfigResources.get(key);
-			if(config == null) {
-				LOGGER.error("execution configuration is not found for: {}. Verify your execution folders and files!", key);	
-			}
-			
-			pipelineExecution.setConfig(config);
-			executionConfigurationMap.put(key, pipelineExecution);
-		}
-		return pipelineExecution;
 	}
 
 	private void addEvaluator(String evaluator, String key) {
@@ -266,15 +205,5 @@ public class PeltasHandlerConfigurationProperties {
 
 	private String sha(String string) {
 		return DigestUtils.sha1Hex(string);
-	}
-
-	public LinkedHashMap<String, PipelineExecution> asPipelineExecutions(List<String> pipeline) {
-		LinkedHashMap<String, PipelineExecution> pipelineExecutionMap = new LinkedHashMap<>();
-		for (String p : pipeline) {
-			PipelineExecution pipelineExecution = this.getPipelineExecution(p);
-			pipelineExecutionMap.put(p, pipelineExecution);
-		}
-
-		return pipelineExecutionMap;
 	}
 }

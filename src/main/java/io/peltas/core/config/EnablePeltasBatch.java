@@ -20,7 +20,6 @@ import org.springframework.batch.core.configuration.annotation.EnableBatchProces
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Import;
 
-@Import({ BasicPeltasConfiguration.class })
 @EnableBatchProcessing
 @EnableAutoConfiguration
 public @interface EnablePeltasBatch {

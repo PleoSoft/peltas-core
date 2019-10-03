@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package io.peltas.core.config;
+package io.peltas.core.repository.database;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceInitializationMode;
 
-@ConfigurationProperties(prefix = "peltas.custom.datasource")
+@ConfigurationProperties(prefix = "peltas.custom.schema")
 public class CustomDatasourceProperties {
 
-	private static final String DEFAULT_SCHEMA_LOCATION = "classpath:META-INF/db/custom-schema-@@platform@@.sql";
+	private static final String DEFAULT_SCHEMA_LOCATION = "classpath:META-INF/db/peltas-custom-schema-@@platform@@.sql";
 
 	/**
 	 * Path to the SQL file to use to initialize the database schema.

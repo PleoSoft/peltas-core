@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package io.peltas.core.alfresco.config;
+package io.peltas.core.repository.database;
 
-import java.util.Map;
+import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
-public class PipelineExecution {
+@Transactional
+public interface PeltasTimestampRepository extends PagingAndSortingRepository<PeltasTimestamp, String> {
 
-	private Map<String, String> config;
-
-	public void setConfig(Map<String, String> config) {
-		this.config = config;
-	}
-
-	public String getConfigValue(String key) {
-		String prop = config.get(key);
-		return prop;
-	}
+	PeltasTimestamp findTopByApplicationNameOrderByAccessDesc(@Param("applicationName") String applicationName);
 }

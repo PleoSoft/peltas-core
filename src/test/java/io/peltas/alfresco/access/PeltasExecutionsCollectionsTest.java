@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +37,9 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.messaging.Message;
@@ -56,10 +57,9 @@ import io.peltas.core.alfresco.PeltasEntry;
 import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
 import io.peltas.core.alfresco.config.PeltasHandlerProperties;
 import io.peltas.core.alfresco.config.PipelineCollection;
-import io.peltas.core.alfresco.config.PipelineExecution;
 import io.peltas.core.alfresco.integration.PeltasHandler;
 import io.peltas.core.batch.PeltasDataHolder;
-import io.peltas.core.batch.PeltasJdbcBatchWriter;
+import io.peltas.core.repository.database.PeltasJdbcBatchWriter;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -72,6 +72,9 @@ public class PeltasExecutionsCollectionsTest {
 
 	@Mock
 	NamedParameterJdbcTemplate jdbcTemplate;
+
+	@Value("classpath:io/peltas/executions/**.sql")
+	Resource[] resources;
 
 	@BeforeEach
 	public void setup() {
@@ -133,19 +136,17 @@ public class PeltasExecutionsCollectionsTest {
 		final ArrayList<PeltasDataHolder> list = new ArrayList<>();
 		list.add(processedPayload);
 
-		final List<String> pipeline = processedPayload.getConfig().getPipeline().getExecutions();
-		assertArrayEquals(Arrays.asList("batch_bi_case", "batch_bi_case_action").toArray(), pipeline.toArray());
+		final List<String> executions = processedPayload.getConfig().getPipeline().getExecutions();
+		assertArrayEquals(Arrays.asList("batch_bi_case", "batch_bi_case_action").toArray(), executions.toArray());
 
-		final LinkedHashMap<String, PipelineExecution> pipelineExecutionMap = properties.asPipelineExecutions(pipeline);
-		assertArrayEquals(Arrays.asList("batch_bi_case", "batch_bi_case_action").toArray(),
-				pipelineExecutionMap.keySet().toArray());
+		assertArrayEquals(Arrays.asList("batch_bi_case", "batch_bi_case_action").toArray(), executions.toArray());
 
 		final Map<String, PipelineCollection> collections = processedPayload.getConfig().getPipeline().getCollections();
 		assertEquals(1, collections.size());
 		assertArrayEquals(Arrays.asList("batch_bi_case_action_aspect", "batch_bi_case_action_aspect2").toArray(),
 				collections.get("aspect").getExecutions().toArray());
 
-		final PeltasJdbcBatchWriter writer = new PeltasJdbcBatchWriter(jdbcTemplate, properties);
+		final PeltasJdbcBatchWriter writer = new PeltasJdbcBatchWriter(jdbcTemplate, resources);
 		writer.write(list);
 	}
 }

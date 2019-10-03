@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.peltas.core.config;
+package io.peltas.core.repository.database;
 
 import javax.sql.DataSource;
 
@@ -23,12 +23,12 @@ import org.springframework.boot.jdbc.DataSourceInitializationMode;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.util.Assert;
 
-public class CustomDatasourceInitializer extends AbstractDataSourceInitializer {
+public class PeltasDatasourceInitializer extends AbstractDataSourceInitializer {
 
-	private CustomDatasourceProperties properties;
+	private final PeltasDatasourceProperties properties;
 
-	protected CustomDatasourceInitializer(DataSource dataSource, ResourceLoader resourceLoader,
-			CustomDatasourceProperties properties) {
+	public PeltasDatasourceInitializer(DataSource dataSource, ResourceLoader resourceLoader,
+			PeltasDatasourceProperties properties) {
 		super(dataSource, resourceLoader);
 		Assert.notNull(properties, "AuditProperties must not be null");
 		this.properties = properties;

@@ -28,15 +28,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.support.builder.ClassifierCompositeItemWriterBuilder;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.classify.Classifier;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.messaging.core.GenericMessagingTemplate;
@@ -53,50 +55,52 @@ import io.peltas.core.alfresco.integration.PeltasRouter;
 import io.peltas.core.batch.EmptyItemWriter;
 import io.peltas.core.batch.ItemRouter;
 import io.peltas.core.batch.PeltasDataHolder;
-import io.peltas.core.batch.PeltasJdbcBatchWriter;
-import io.peltas.core.config.AbstractPeltasConfiguration;
+import io.peltas.core.batch.PeltasItemProcessor;
+import io.peltas.core.batch.PeltasProcessor;
+import io.peltas.core.config.AbstractPeltasBatchConfiguration;
 import io.peltas.core.config.EnablePeltasInMemory;
-import io.peltas.core.repository.PeltasTimestampRepository;
+import io.peltas.core.repository.TxDataRepository;
+import io.peltas.core.repository.database.CustomDatasourceInitializer;
+import io.peltas.core.repository.database.CustomDatasourceProperties;
+import io.peltas.core.repository.database.JpaTxDataWriter;
+import io.peltas.core.repository.database.PeltasDatasourceInitializer;
+import io.peltas.core.repository.database.PeltasDatasourceProperties;
+import io.peltas.core.repository.database.PeltasJdbcBatchWriter;
+import io.peltas.core.repository.database.PeltasTimestamp;
+import io.peltas.core.repository.database.PeltasTimestampRepository;
 
 @PropertySource(ignoreResourceNotFound = true, value = { "classpath:io/peltas/peltas.properties" })
 // @Aspect FIXME: check pointcut for stopping
 @EnablePeltasInMemory
 public abstract class AbstractAlfrescoPeltasConfiguration
-		extends AbstractPeltasConfiguration<PeltasEntry, PeltasDataHolder> implements InitializingBean {
+		extends AbstractPeltasBatchConfiguration<PeltasEntry, PeltasDataHolder> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAlfrescoPeltasConfiguration.class);
 
 	public static final String AUDIT_ID_SEPARATOR = "___";
 
 	@Autowired
-	protected GenericMessagingTemplate template;
-
-	@Autowired
-	protected PeltasTimestampRepository auditRepository;
-
-	@Autowired
-	protected JdbcTemplate jdbcTemplate;
+	protected GenericMessagingTemplate messagingTemplate;
 
 	@Autowired
 	private JobLauncher jobLauncher;
 
 	@Value("${peltas.chunksize}")
 	protected Integer chunkSize;
-	
-	@Value("classpath:io/peltas/executions/**") 
-	private Resource[] resources;
 
-	private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	@Autowired
+	protected TxDataRepository dataRepository;
 
-	private PeltasJdbcBatchWriter peltasJdbcBatchWriter;
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
-	}
+	@Autowired
+	protected ItemWriter<PeltasDataHolder> itemWriter;
 
 	public String alfrescoAuditApplication() {
 		return alfrescoAuditProperties().getApplication();
+	}
+
+	@Override
+	public PeltasItemProcessor<PeltasEntry, PeltasDataHolder> processor() {
+		return new PeltasProcessor(alfrescoAuditApplication(), messagingTemplate, dataRepository);
 	}
 
 	@Bean
@@ -112,7 +116,7 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 
 	@Bean(initMethod = "checkEvaluatorConfigurationOccurencies")
 	public PeltasHandlerConfigurationProperties alfrescoHandlerProperties() {
-		return new PeltasHandlerConfigurationProperties(evaluatorExpressionRegistry(), resources);
+		return new PeltasHandlerConfigurationProperties(evaluatorExpressionRegistry());
 	}
 
 	@Bean
@@ -137,57 +141,24 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 		System.exit(-1);
 	}
 
-	@Bean
-	public PeltasDatasourceProperties alfrescoAccessDatasourceProperties() {
-		return new PeltasDatasourceProperties();
-	}
-
-	@Bean
-	public PeltasDatasourceInitializer alfrescoAccessDatasourceInitializer(DataSource dataSource,
-			ResourceLoader resourceLoader) {
-		return new PeltasDatasourceInitializer(dataSource, resourceLoader, alfrescoAccessDatasourceProperties());
-	}
-
 	@Override
 	public ItemRouter<PeltasEntry> router() {
 		return new PeltasRouter(alfrescoHandlerProperties(), alfrescoAuditProperties(), false);
 	}
 
-	// @Override
-	// public PeltasItemProcessor<AlfrescoAuditEntry, PeltasDataHolder>
-	// processor() {
-	// try {
-	// return new PeltasProcessor(alfrescoAuditApplication(), template,
-	// auditRepository, licenseChecker());
-	// } catch (IOException e) {
-	// throw new PeltasException("Cannot load license", e);
-	// }
-	// }
-
 	@Override
 	public ItemWriter<PeltasDataHolder> writer() {
-		final PeltasHandlerConfigurationProperties alfrescoHandlerProperties = alfrescoHandlerProperties();
 
 		Classifier<PeltasDataHolder, ItemWriter<? super PeltasDataHolder>> classifier1 = new Classifier<PeltasDataHolder, ItemWriter<? super PeltasDataHolder>>() {
 			@Override
 			public ItemWriter<? super PeltasDataHolder> classify(final PeltasDataHolder classifiable) {
-				String writerName = classifiable.getConfig().getPipeline().getWriter();
-
-				if ("jdbchandler".equals(writerName)) {
-					PeltasHandlerProperties config = classifiable.getConfig();
-					List<String> pipeline = config.getPipeline().getExecutions();
-					if (pipeline == null || pipeline.size() == 0) {
-						return new EmptyItemWriter<>();
-					}
-
-					if (peltasJdbcBatchWriter == null) {
-						peltasJdbcBatchWriter = new PeltasJdbcBatchWriter(namedParameterJdbcTemplate,
-								alfrescoHandlerProperties);
-					}
-					return peltasJdbcBatchWriter;
+				PeltasHandlerProperties config = classifiable.getConfig();
+				List<String> pipeline = config.getPipeline().getExecutions();
+				if (pipeline == null || pipeline.size() == 0) {
+					return new EmptyItemWriter<>();
 				}
 
-				throw new RuntimeException("Writer not handled: " + writerName);
+				return itemWriter;
 			}
 		};
 
@@ -202,6 +173,82 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 	@Override
 	protected int getChunkSize() {
 		return chunkSize;
+	}
+
+	@Configuration
+	@ConditionalOnProperty(name = "peltas.repository", havingValue = "database")
+	@EnableJpaRepositories(basePackageClasses = PeltasTimestampRepository.class)
+	@EntityScan(basePackageClasses = PeltasTimestamp.class)
+	public class DatabaseConfiguration {
+
+		@Bean
+		public JpaTxDataWriter txDataWriter(PeltasTimestampRepository repository) {
+			return new JpaTxDataWriter(repository);
+		}
+
+		@Bean
+		public PeltasJdbcBatchWriter peltasBatchWriter(JdbcTemplate jdbcTemplate,
+				@Value("classpath:io/peltas/db/executions/*.sql") Resource[] resources) {
+			return new PeltasJdbcBatchWriter(new NamedParameterJdbcTemplate(jdbcTemplate), resources);
+		}
+
+		@Bean
+		public PeltasDatasourceProperties peltasDatasourceProperties() {
+			return new PeltasDatasourceProperties();
+		}
+
+		@Bean
+		public PeltasDatasourceInitializer peltasDatasourceInitializer(DataSource dataSource,
+				ResourceLoader resourceLoader) {
+			return new PeltasDatasourceInitializer(dataSource, resourceLoader, peltasDatasourceProperties());
+		}
+
+		@Bean
+		public CustomDatasourceProperties peltasCustomDatasourceProperties() {
+			return new CustomDatasourceProperties();
+		}
+
+		@Bean
+		@ConditionalOnProperty(name = "peltas.custom.datasource.enabled", havingValue = "true")
+		public CustomDatasourceInitializer peltasCustomDatasourceInitializer(DataSource dataSource,
+				ResourceLoader resourceLoader) {
+			return new CustomDatasourceInitializer(dataSource, resourceLoader, peltasCustomDatasourceProperties());
+		}
+	}
+
+	@Configuration
+	@ConditionalOnProperty(name = "peltas.repository", havingValue = "java")
+	public class HazelcastConfiguration {
+
+		@Bean
+		public TxDataRepository txDataWriter() {
+			return new TxDataRepository() {
+				@Override
+				public PeltasTimestamp readTx(String applicationName) {
+					// TODO Auto-generated method stub
+					System.out.println();
+					return null;
+				}
+
+				@Override
+				public PeltasTimestamp writeTx(PeltasTimestamp ts) {
+					// TODO Auto-generated method stub
+					System.out.println();
+					return ts;
+				}
+			};
+		}
+
+		@Bean
+		public ItemWriter<PeltasDataHolder> peltasBatchWriter() {
+			return new ItemWriter<PeltasDataHolder>() {
+				@Override
+				public void write(List<? extends PeltasDataHolder> items) throws Exception {
+					// TODO Auto-generated method stub
+					System.out.println();
+				}
+			};
+		}
 	}
 
 }

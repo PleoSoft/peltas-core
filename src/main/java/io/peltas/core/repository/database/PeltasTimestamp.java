@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.peltas.core.repository;
+package io.peltas.core.repository.database;
 
 import java.io.Serializable;
 import java.util.Date;

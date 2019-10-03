@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package io.peltas.core.alfresco.config;
+package io.peltas.core.repository.database;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceInitializationMode;
 
-@ConfigurationProperties(prefix = "peltas.access.datasource")
+@ConfigurationProperties(prefix = "peltas.datasource")
 public class PeltasDatasourceProperties {
 
-	private static final String DEFAULT_SCHEMA_LOCATION = "classpath:io/peltas/db/peltas-schema.sql";
+	private static final String DEFAULT_SCHEMA_LOCATION = "classpath:io/peltas/db/peltas-create-schema-@@platform@@.sql";
 
 	/**
 	 * Path to the SQL file to use to initialize the database schema.

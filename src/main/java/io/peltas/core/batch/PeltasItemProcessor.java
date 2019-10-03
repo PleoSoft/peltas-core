@@ -60,6 +60,7 @@ public abstract class PeltasItemProcessor<I, O> extends PeltasListener<I, O> imp
 		MessageContextHolder.removeMessageContext(messageContext);
 		O payload = ret.getPayload();
 		if (shouldSkipPayload(payload)) {
+			onItemSkipped(item, payload);
 			return null;
 		}
 
@@ -69,6 +70,9 @@ public abstract class PeltasItemProcessor<I, O> extends PeltasListener<I, O> imp
 		return payload;
 	}
 
+	protected void onItemSkipped(I item, O payload) {
+	}
+	
 	protected void onItemProcessed(I item, O payload) {
 	}
 

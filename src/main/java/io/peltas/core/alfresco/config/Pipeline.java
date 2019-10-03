@@ -22,7 +22,6 @@ import java.util.Map;
 public class Pipeline {
 
 	private List<String> executions;
-	private String writer;
 	private Map<String, PipelineCollection> collections;
 
 	public Map<String, PipelineCollection> getCollections() {
@@ -43,13 +42,5 @@ public class Pipeline {
 
 	public void setExecutions(List<String> executions) {
 		this.executions = executions;
-	}
-
-	public String getWriter() {
-		return writer;
-	}
-
-	public void setWriter(String writer) {
-		this.writer = writer;
 	}
 }
