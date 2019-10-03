@@ -21,6 +21,6 @@ import io.peltas.core.repository.database.PeltasTimestamp;
 public interface TxDataRepository {
 
 	PeltasTimestamp writeTx(PeltasTimestamp ts);
-	
+
 	PeltasTimestamp readTx(String applicationName);
 }

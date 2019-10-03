@@ -7,7 +7,7 @@ public class PeltasConversionException extends ConversionException {
 	/**
 	 * Construct a new conversion exception.
 	 * 
-	 * @param cause   the cause
+	 * @param cause the cause
 	 */
 	public PeltasConversionException(Throwable cause) {
 		super(cause.getMessage(), cause);

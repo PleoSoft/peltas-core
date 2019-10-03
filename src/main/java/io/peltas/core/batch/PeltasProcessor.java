@@ -31,7 +31,6 @@ import io.peltas.core.alfresco.config.PeltasHandlerProperties;
 import io.peltas.core.alfresco.integration.DoNotProcessMarker;
 import io.peltas.core.repository.TxDataRepository;
 import io.peltas.core.repository.database.PeltasTimestamp;
-import io.peltas.core.repository.database.PeltasTimestampRepository;
 
 public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasDataHolder> {
 
@@ -68,7 +67,7 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 	protected void onItemProcessed(PeltasEntry item, PeltasDataHolder holder) {
 		counter.incrementAndGet();
 	}
-	
+
 	@Override
 	protected void onItemSkipped(PeltasEntry item, PeltasDataHolder holder) {
 		System.out.println(counter.get());
@@ -88,8 +87,8 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 			checkNodesCount(nodesCount);
 		}
 
-		if(counter.get() == 0) {
-		  counter.set(0);
+		if (counter.get() == 0) {
+			counter.set(0);
 		}
 	}
 
@@ -111,9 +110,8 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 		// todo use string builder
 		String newRef = getCurrentRef() + ID_SEPARATOR + nodesCountToString(processed);
 		timestamp.setRef(newRef);
-		PeltasTimestamp peltasTimestamp;
-		peltasTimestamp = auditRepository.writeTx(timestamp);
-		currentChunkContext.setAttribute("peltasTimestamp", peltasTimestamp);
+		PeltasTimestamp peltasTimestamp = auditRepository.writeTx(timestamp);
+		currentChunkContext.setAttribute("peltasTimestamp", peltasTimestamp != null ? peltasTimestamp : timestamp);
 	}
 
 	protected String getCurrentRef() {

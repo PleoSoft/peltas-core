@@ -58,7 +58,8 @@ public class PeltasRouter implements ItemRouter<PeltasEntry> {
 			}
 
 			String noMatchHandler = properties.getNoMatchHandler();
-			LOGGER.warn("handleMessage() redirecting to noMatchHandler {} - ENTRY ID: {}", noMatchHandler, entry.getId());
+			LOGGER.warn("handleMessage() redirecting to noMatchHandler {} - ENTRY ID: {}", noMatchHandler,
+					entry.getId());
 			return noMatchHandler;
 		}
 

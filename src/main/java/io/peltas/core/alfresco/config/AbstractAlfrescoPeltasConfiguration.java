@@ -217,7 +217,7 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 	}
 
 	@Configuration
-	@ConditionalOnProperty(name = "peltas.repository", havingValue = "java")
+	@ConditionalOnProperty(name = "peltas.repository", havingValue = "sample")
 	public class HazelcastConfiguration {
 
 		@Bean
@@ -225,15 +225,11 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 			return new TxDataRepository() {
 				@Override
 				public PeltasTimestamp readTx(String applicationName) {
-					// TODO Auto-generated method stub
-					System.out.println();
 					return null;
 				}
 
 				@Override
 				public PeltasTimestamp writeTx(PeltasTimestamp ts) {
-					// TODO Auto-generated method stub
-					System.out.println();
 					return ts;
 				}
 			};
@@ -244,8 +240,6 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 			return new ItemWriter<PeltasDataHolder>() {
 				@Override
 				public void write(List<? extends PeltasDataHolder> items) throws Exception {
-					// TODO Auto-generated method stub
-					System.out.println();
 				}
 			};
 		}

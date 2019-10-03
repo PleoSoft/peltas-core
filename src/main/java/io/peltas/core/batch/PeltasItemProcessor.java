@@ -72,7 +72,7 @@ public abstract class PeltasItemProcessor<I, O> extends PeltasListener<I, O> imp
 
 	protected void onItemSkipped(I item, O payload) {
 	}
-	
+
 	protected void onItemProcessed(I item, O payload) {
 	}
 

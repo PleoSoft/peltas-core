@@ -32,12 +32,14 @@ public class StringToMapUtil {
 	public static final char ARRAY_BEGIN = '[';
 	public static final char ARRAY_END = ']';
 	public static final char WHITESPACE = ' ';
-	
-	/** a map conversion of a map.toString() string result jsonString should
-	 * starts with { and ends with } like: {key=val, key2=val2}
+
+	/**
+	 * a map conversion of a map.toString() string result jsonString should starts
+	 * with { and ends with } like: {key=val, key2=val2}
 	 * 
-	 * @param inputString string starting with { or [ and ending with } or ] respectively 
-	 * @param delimiter the delimiter used to find a map entry (key delimiter)
+	 * @param inputString string starting with { or [ and ending with } or ]
+	 *                    respectively
+	 * @param delimiter   the delimiter used to find a map entry (key delimiter)
 	 * @return a map representation of the inputString
 	 */
 	static public Map<String, Object> stringToMap(final String inputString, final char delimiter) {

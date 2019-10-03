@@ -68,7 +68,7 @@ public abstract class AbstractPeltasBatchConfiguration<I, O> {
 
 	@Autowired
 	private PlatformTransactionManager platformTransactionManager;
-	
+
 	@Bean
 	public GenericMessagingTemplate messagingTemplate(BeanFactory beanFactory) {
 		GenericMessagingTemplate template = new GenericMessagingTemplate();
