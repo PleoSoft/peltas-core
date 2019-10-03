@@ -19,16 +19,13 @@ package io.peltas.core.repository.database;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.item.ItemWriter;
 import org.springframework.core.io.Resource;
 import org.springframework.integration.transformer.ObjectToMapTransformer;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -42,10 +39,10 @@ import org.springframework.util.StringUtils;
 import com.google.common.collect.ImmutableMap;
 
 import io.peltas.core.alfresco.PeltasEntry;
-import io.peltas.core.alfresco.config.PipelineCollection;
 import io.peltas.core.batch.PeltasDataHolder;
+import io.peltas.core.batch.PeltasItemWriter;
 
-public class PeltasJdbcBatchWriter implements ItemWriter<PeltasDataHolder> {
+public class PeltasJdbcBatchWriter extends PeltasItemWriter<MapSqlParameterSource, MapSqlParameterSource> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PeltasJdbcBatchWriter.class);
 
@@ -82,67 +79,54 @@ public class PeltasJdbcBatchWriter implements ItemWriter<PeltasDataHolder> {
 		}
 	}
 
+	@Override
+	public MapSqlParameterSource createItemInputParameters(PeltasDataHolder item) {
+		return createSqlParameterSource(item);
+	}
+
+	@Override
+	public void itemExecution(String executionKey, MapSqlParameterSource parameters) {
+		String sql = mappedExecutionsConfigResources.get(executionKey);
+		Map<String, Object> sqlResult = namedParameterJdbcTemplate.queryForMap(sql, parameters);
+		addSources(executionKey, parameters, sqlResult);
+
+		if (LOGGER.isTraceEnabled()) {
+			LOGGER.trace("doWithItem() executing sql: {} with data {}", sql, parameters.getValues());
+		}
+	}
+
+//	@Override
+//	public MapSqlParameterSource createCollectionInputParameters(MapSqlParameterSource params) {
+//		return new MapSqlParameterSource(params.getValues());
+//	}
+
 	@SuppressWarnings("unchecked")
-	public void write(List<? extends PeltasDataHolder> items) throws Exception {
+	@Override
+	public MapSqlParameterSource createCollectionItemInputParameters(MapSqlParameterSource params, String collectionKey,
+			Object collectionValue) {
+		MapSqlParameterSource collectionParams = new MapSqlParameterSource(params.getValues());
 
-		for (PeltasDataHolder item : items) {
-			MapSqlParameterSource parameterSourceMap = createSqlParameterSource(item);
+		if (collectionValue instanceof Map) {
+			Message<Map<String, ?>> message = new GenericMessage<Map<String, ?>>(
+					ImmutableMap.of(collectionKey, collectionValue));
+			ObjectToMapTransformer transformer = new ObjectToMapTransformer();
+			transformer.setShouldFlattenKeys(true);
+			Map<String, ?> payload = (Map<String, ?>) transformer.transform(message).getPayload();
+			collectionParams.addValues(payload);
+		} else {
+			collectionParams.addValue(collectionKey, collectionValue);
+		}
 
-			List<String> executions = item.getConfig().getPipeline().getExecutions();
+		return collectionParams;
+	}
 
-			for (String executionKey : executions) {
-				String sql = mappedExecutionsConfigResources.get(executionKey);
-				Map<String, Object> sqlResult = namedParameterJdbcTemplate.queryForMap(sql, parameterSourceMap);
-				addSources(executionKey, parameterSourceMap, sqlResult);
-
-				if (LOGGER.isTraceEnabled()) {
-					LOGGER.trace("doWithItem() executing sql: {} with data {}", sql, parameterSourceMap.getValues());
-				}
-			}
-
-			Map<String, PipelineCollection> collections = item.getConfig().getPipeline().getCollections();
-			if (collections != null) {
-				LOGGER.debug("doWithItem() executing collections: {}", collections);
-
-				Set<Entry<String, PipelineCollection>> collectionEntrySet = collections.entrySet();
-				for (Entry<String, PipelineCollection> collectionEntry : collectionEntrySet) {
-					String collectionKey = collectionEntry.getKey();
-
-					PipelineCollection pipelineCollection = collectionEntry.getValue();
-					List<String> collectionExecutions = pipelineCollection.getExecutions();
-
-					Collection<Object> collectionValueList = (Collection<Object>) item.getBuilder().get(collectionKey);
-
-					if (collectionValueList != null && !collectionValueList.isEmpty()) {
-
-						MapSqlParameterSource collectionSqlMapsource = new MapSqlParameterSource(
-								parameterSourceMap.getValues());
-
-						for (Object collectionValue : collectionValueList) {
-							if (collectionValue instanceof Map) {
-								Message<Map<String, ?>> message = new GenericMessage<Map<String, ?>>(
-										ImmutableMap.of(collectionKey, collectionValue));
-								ObjectToMapTransformer transformer = new ObjectToMapTransformer();
-								transformer.setShouldFlattenKeys(true);
-								Map<String, ?> payload = (Map<String, ?>) transformer.transform(message).getPayload();
-								collectionSqlMapsource.addValues(payload);
-							} else {
-								collectionSqlMapsource.addValue(collectionKey, collectionValue);
-							}
-
-							for (String executionKey : collectionExecutions) {
-								String collectionSql = mappedExecutionsConfigResources.get(executionKey);
-								Map<String, Object> sqlResult = namedParameterJdbcTemplate.queryForMap(collectionSql,
-										collectionSqlMapsource);
-								addSources(executionKey, collectionSqlMapsource, sqlResult);
-								if (LOGGER.isTraceEnabled()) {
-									LOGGER.trace("doWithItem() executing collection sql in batch: {}", collectionSql);
-								}
-							}
-						}
-					}
-				}
-			}
+	@Override
+	public void collectionExecution(String executionKey, MapSqlParameterSource params) {
+		String collectionSql = mappedExecutionsConfigResources.get(executionKey);
+		Map<String, Object> sqlResult = namedParameterJdbcTemplate.queryForMap(collectionSql, params);
+		addSources(executionKey, params, sqlResult);
+		if (LOGGER.isTraceEnabled()) {
+			LOGGER.trace("doWithItem() executing collection sql in batch: {}", collectionSql);
 		}
 	}
 
