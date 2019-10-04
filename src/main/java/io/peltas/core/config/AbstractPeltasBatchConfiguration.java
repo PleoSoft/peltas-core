@@ -38,7 +38,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.messaging.Message;
@@ -55,8 +54,6 @@ import io.peltas.core.repository.database.CustomDatasourceProperties;
 import io.peltas.core.repository.database.PeltasTimestamp;
 
 @Configuration
-@EnableIntegration
-@EnableTransactionManagement
 public abstract class AbstractPeltasBatchConfiguration<I, O> {
 
 	@Autowired
@@ -164,7 +161,7 @@ public abstract class AbstractPeltasBatchConfiguration<I, O> {
 	}
 
 	@Configuration
-	@ConditionalOnProperty(name = "peltas.custom.datasource.enabled", havingValue = "true")
+	@ConditionalOnProperty(name = "peltas.custom.schema.enabled", havingValue = "true")
 	public class CustomDatasourceConfiguration {
 
 		@Bean

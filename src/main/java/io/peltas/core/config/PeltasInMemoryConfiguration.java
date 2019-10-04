@@ -29,7 +29,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.AnnotationAttributes;
@@ -44,14 +44,12 @@ public class PeltasInMemoryConfiguration extends AbstractBatchConfiguration
 
 	private MapJobRepositoryFactoryBean jobRepositoryFactory;
 
-	@Autowired(required = false)
-	private PlatformTransactionManager platformTransactionManager;
+	@Autowired
+	private PlatformTransactionManager transactionManager;
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		Assert.notNull(platformTransactionManager,
-				"PlatformTransactionManager is not available for Peltas.io. You should not use @EnableBatchProcessing");
-		jobRepositoryFactory = new MapJobRepositoryFactoryBean(this.platformTransactionManager);
+		jobRepositoryFactory = new MapJobRepositoryFactoryBean(this.transactionManager);
 	}
 
 	@Override
@@ -69,7 +67,7 @@ public class PeltasInMemoryConfiguration extends AbstractBatchConfiguration
 
 	@Bean
 	public StepBuilderFactory stepBuilders() throws Exception {
-		return new StepBuilderFactory(jobRepository(), platformTransactionManager);
+		return new StepBuilderFactory(jobRepository(), transactionManager);
 	}
 
 	@Bean
@@ -90,10 +88,10 @@ public class PeltasInMemoryConfiguration extends AbstractBatchConfiguration
 		return new MapJobExplorerFactoryBean(this.jobRepositoryFactory).getObject();
 	}
 
-	@ConditionalOnBean(PlatformTransactionManager.class)
+	@ConditionalOnMissingBean(PlatformTransactionManager.class)
 	@Bean
 	public PlatformTransactionManager transactionManager() throws Exception {
-		return platformTransactionManager;
+		return transactionManager;
 	}
 
 	@Override
