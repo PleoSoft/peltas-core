@@ -12,20 +12,37 @@ import org.springframework.batch.item.ItemWriter;
 
 import io.peltas.core.alfresco.config.PipelineCollection;
 
-public abstract class PeltasItemWriter<I, C> implements ItemWriter<PeltasDataHolder> {
+public class PeltasExecutionItemWriter<I, C> implements ItemWriter<PeltasDataHolder> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(PeltasItemWriter.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(PeltasExecutionItemWriter.class);
 
-	public abstract I createItemInputParameters(PeltasDataHolder item);
+	public void beforeExecution() {
+	};
 
-	public abstract void itemExecution(String executionKey, I parameters);
+	public void afterExecution() {
+	};
 
-	public abstract C createCollectionItemInputParameters(I itemParams, String collectionKey, Object collectionValue);
+	public void itemExecution(String executionKey, I parameters, PeltasDataHolder item) {
+	};
 
-	public abstract void collectionExecution(String executionKey, C params);
+	public void collectionExecution(String executionKey, C params, PeltasDataHolder item) {
+	};
+
+	public void doWithPreviousExecutionResult(String executionKey, I parameters, PeltasDataHolder item) {
+	};
+
+	public I createItemInputParameters(PeltasDataHolder item) {
+		return null;
+	}
+
+	public C createCollectionItemInputParameters(I itemParams, String collectionKey, Object collectionValue) {
+		return null;
+	}
 
 	@SuppressWarnings("unchecked")
 	public void write(List<? extends PeltasDataHolder> items) throws Exception {
+
+		beforeExecution();
 
 		for (PeltasDataHolder item : items) {
 			I parameterSourceMap = createItemInputParameters(item);
@@ -34,7 +51,7 @@ public abstract class PeltasItemWriter<I, C> implements ItemWriter<PeltasDataHol
 
 			for (String executionKey : executions) {
 				LOGGER.trace("item: {} - executionKey: {}", item.getAuditEntry().getId(), executionKey);
-				itemExecution(executionKey, parameterSourceMap);
+				itemExecution(executionKey, parameterSourceMap, item);
 			}
 
 			Map<String, PipelineCollection> collections = item.getConfig().getPipeline().getCollections();
@@ -56,12 +73,14 @@ public abstract class PeltasItemWriter<I, C> implements ItemWriter<PeltasDataHol
 							for (String executionKey : collectionExecutions) {
 								LOGGER.trace("collection: {} - item: {} - executionKey: {}", collectionKey,
 										item.getAuditEntry().getId(), executionKey);
-								collectionExecution(executionKey, parameters);
+								collectionExecution(executionKey, parameters, item);
 							}
 						}
 					}
 				}
 			}
 		}
+
+		afterExecution();
 	}
 }

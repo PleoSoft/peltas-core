@@ -20,6 +20,7 @@ public class PeltasHandlerProperties {
 	private String evaluator;
 	private PeltasMapper mapper;
 	private Pipeline pipeline;
+	private String handlerName;
 
 	public String getEvaluator() {
 		return evaluator;
@@ -43,5 +44,13 @@ public class PeltasHandlerProperties {
 
 	public void setPipeline(Pipeline pipeline) {
 		this.pipeline = pipeline;
+	}
+	
+	public String getHandlerName() {
+		return handlerName;
+	}
+	
+	public void setHandlerName(String handlerName) {
+		this.handlerName = handlerName;
 	}
 }

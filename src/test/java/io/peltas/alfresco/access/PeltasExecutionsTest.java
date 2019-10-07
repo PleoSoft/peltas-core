@@ -60,7 +60,7 @@ import io.peltas.core.alfresco.config.PeltasHandlerProperties;
 import io.peltas.core.alfresco.config.PipelineCollection;
 import io.peltas.core.alfresco.integration.PeltasHandler;
 import io.peltas.core.batch.PeltasDataHolder;
-import io.peltas.core.repository.database.PeltasJdbcBatchWriter;
+import io.peltas.core.repository.database.PeltasJdbcWriter;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -83,11 +83,11 @@ public class PeltasExecutionsTest {
 		final PeltasHandler handler = new PeltasHandler();
 
 		final Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
-				.setHeader("alfresco.handler.configuration", new PeltasHandlerProperties()).build();
+				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();
 		final PeltasHandlerProperties configuration = properties.getForHandler(documentcreatedHandler);
 
 		final PeltasHandlerProperties config = (PeltasHandlerProperties) message.getHeaders()
-				.get("alfresco.handler.configuration");
+				.get("peltas.handler.configuration");
 		BeanUtils.copyProperties(configuration, config);
 
 		return handler.handle(message);
@@ -141,7 +141,7 @@ public class PeltasExecutionsTest {
 		List<String> executions = processedPayload.getConfig().getPipeline().getExecutions();
 		assertArrayEquals(Arrays.asList("batch_bi_case", "batch_bi_case_action").toArray(), executions.toArray());
 
-		final PeltasJdbcBatchWriter writer = new PeltasJdbcBatchWriter(jdbcTemplate, resources);
+		final PeltasJdbcWriter writer = new PeltasJdbcWriter(jdbcTemplate, resources);
 
 		Assertions.assertThrows(NullPointerException.class, () -> {
 			writer.write(list);
@@ -182,7 +182,7 @@ public class PeltasExecutionsTest {
 		List<String> executions = processedPayload.getConfig().getPipeline().getExecutions();
 		assertArrayEquals(Arrays.asList("batch_bi_case", "batch_bi_case_action").toArray(), executions.toArray());
 
-		final MapSqlParameterSource createSqlParameterSource = PeltasJdbcBatchWriter
+		final MapSqlParameterSource createSqlParameterSource = PeltasJdbcWriter
 				.createSqlParameterSource(processedPayload);
 		assertNull(createSqlParameterSource.getValue("user"));
 	}
@@ -235,7 +235,7 @@ public class PeltasExecutionsTest {
 		List<String> aspectExecutions = collections.get("aspect").getExecutions();
 		assertArrayEquals(Arrays.asList("batch_bi_case_action_aspect").toArray(), aspectExecutions.toArray());
 
-		final PeltasJdbcBatchWriter writer = new PeltasJdbcBatchWriter(jdbcTemplate, resources);
+		final PeltasJdbcWriter writer = new PeltasJdbcWriter(jdbcTemplate, resources);
 		writer.write(list);
 	}
 
@@ -276,7 +276,7 @@ public class PeltasExecutionsTest {
 		assertThat(executions.size()).isEqualTo(1);
 		assertArrayEquals(Arrays.asList("batch_bi_case").toArray(), executions.toArray());
 
-		final PeltasJdbcBatchWriter writer = new PeltasJdbcBatchWriter(jdbcTemplate, resources);
+		final PeltasJdbcWriter writer = new PeltasJdbcWriter(jdbcTemplate, resources);
 		writer.write(list);
 	}
 

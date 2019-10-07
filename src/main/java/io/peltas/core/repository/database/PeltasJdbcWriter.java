@@ -40,17 +40,17 @@ import com.google.common.collect.ImmutableMap;
 
 import io.peltas.core.alfresco.PeltasEntry;
 import io.peltas.core.batch.PeltasDataHolder;
-import io.peltas.core.batch.PeltasItemWriter;
+import io.peltas.core.batch.PeltasExecutionItemWriter;
 
-public class PeltasJdbcBatchWriter extends PeltasItemWriter<MapSqlParameterSource, MapSqlParameterSource> {
+public class PeltasJdbcWriter extends PeltasExecutionItemWriter<MapSqlParameterSource, MapSqlParameterSource> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(PeltasJdbcBatchWriter.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(PeltasJdbcWriter.class);
 
 	private final NamedParameterJdbcOperations namedParameterJdbcTemplate;
 
 	private final Map<String, String> mappedExecutionsConfigResources;
 
-	public PeltasJdbcBatchWriter(NamedParameterJdbcTemplate template, Resource[] resources) {
+	public PeltasJdbcWriter(NamedParameterJdbcTemplate template, Resource[] resources) {
 		this.namedParameterJdbcTemplate = template;
 
 		this.mappedExecutionsConfigResources = new HashMap<>();
@@ -85,7 +85,7 @@ public class PeltasJdbcBatchWriter extends PeltasItemWriter<MapSqlParameterSourc
 	}
 
 	@Override
-	public void itemExecution(String executionKey, MapSqlParameterSource parameters) {
+	public void itemExecution(String executionKey, MapSqlParameterSource parameters, PeltasDataHolder item) {
 		String sql = mappedExecutionsConfigResources.get(executionKey);
 		Map<String, Object> sqlResult = namedParameterJdbcTemplate.queryForMap(sql, parameters);
 		addSources(executionKey, parameters, sqlResult);
@@ -121,7 +121,7 @@ public class PeltasJdbcBatchWriter extends PeltasItemWriter<MapSqlParameterSourc
 	}
 
 	@Override
-	public void collectionExecution(String executionKey, MapSqlParameterSource params) {
+	public void collectionExecution(String executionKey, MapSqlParameterSource params, PeltasDataHolder item) {
 		String collectionSql = mappedExecutionsConfigResources.get(executionKey);
 		Map<String, Object> sqlResult = namedParameterJdbcTemplate.queryForMap(collectionSql, params);
 		addSources(executionKey, params, sqlResult);

@@ -138,13 +138,13 @@ public class PeltasHandler {
 		});
 	}
 
-	@ServiceActivator(inputChannel = "auditprocess")
+	@ServiceActivator(inputChannel = "peltasprocessing")
 	public PeltasDataHolder handle(Message<PeltasEntry> message) {
 		final PeltasEntry auditEntry = message.getPayload();
 		LOGGER.debug("handle() processing {}", auditEntry);
 
 		final PeltasHandlerProperties config = (PeltasHandlerProperties) message.getHeaders()
-				.get("alfresco.handler.configuration");
+				.get("peltas.handler.configuration");
 
 		final PeltasMapper mapper = config.getMapper();
 		final Map<String, Object> mappedProperties = new HashMap<>();
@@ -153,8 +153,7 @@ public class PeltasHandler {
 			final Map<String, PeltasExpresionProperty> configuredProperties = mapper.getProperty();
 			processProperties(auditEntry, configuredProperties, mappedProperties);
 
-			LOGGER.trace("handle() properties configured {}", configuredProperties);
-			LOGGER.debug("handle() properties mapped {}", mappedProperties);
+			LOGGER.trace("handle() properties configured {} -  mapped {}", configuredProperties, mappedProperties);
 			return new PeltasDataHolder(auditEntry, configuredProperties, mappedProperties, config);
 		} catch (final Throwable e) {
 			throw new PeltasConversionException(e);

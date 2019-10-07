@@ -71,11 +71,11 @@ public class PeltasPropertyMapperMoveActionTest {
 		PeltasHandler handler = new PeltasHandler();
 
 		Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
-				.setHeader("alfresco.handler.configuration", new PeltasHandlerProperties()).build();
+				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();
 		PeltasHandlerProperties configuration = pipeline.getForHandler(documentcreatedHandler);
 
 		PeltasHandlerProperties config = (PeltasHandlerProperties) message.getHeaders()
-				.get("alfresco.handler.configuration");
+				.get("peltas.handler.configuration");
 		BeanUtils.copyProperties(configuration, config);
 
 		PeltasDataHolder processedPayload = handler.handle(message);
@@ -112,11 +112,11 @@ public class PeltasPropertyMapperMoveActionTest {
 		PeltasHandler handler = new PeltasHandler();
 
 		Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
-				.setHeader("alfresco.handler.configuration", new PeltasHandlerProperties()).build();
+				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();
 		PeltasHandlerProperties configuration = pipeline.getForHandler(documentcreatedHandler);
 
 		PeltasHandlerProperties config = (PeltasHandlerProperties) message.getHeaders()
-				.get("alfresco.handler.configuration");
+				.get("peltas.handler.configuration");
 		BeanUtils.copyProperties(configuration, config);
 
 		PeltasDataHolder processedPayload = handler.handle(message);

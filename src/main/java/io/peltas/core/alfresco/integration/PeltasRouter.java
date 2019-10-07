@@ -49,11 +49,11 @@ public class PeltasRouter implements ItemRouter<PeltasEntry> {
 
 		LOGGER.trace("handleMessage() {}", entry);
 		String bestMatchHandler = pipeline.findFirstBestMatchHandler(entry);
-		LOGGER.debug("handleMessage() best match handler {}", bestMatchHandler);
+		LOGGER.trace("handleMessage() best match handler {}", bestMatchHandler);
 
 		if (bestMatchHandler == null) {
 			if (expectionOnNoMatch) {
-				LOGGER.warn("handleMessage() failed to find a configured handler for {}", entry);
+				LOGGER.error("handleMessage() failed to find a configured handler for {}", entry);
 				throw new PeltasException("no handler was found");
 			}
 
@@ -66,9 +66,10 @@ public class PeltasRouter implements ItemRouter<PeltasEntry> {
 		PeltasHandlerProperties configuration = pipeline.getForHandler(bestMatchHandler);
 
 		PeltasHandlerProperties config = (PeltasHandlerProperties) message.getHeaders()
-				.get("alfresco.handler.configuration");
+				.get("peltas.handler.configuration");
 		BeanUtils.copyProperties(configuration, config);
-
-		return "auditprocess";
+		config.setHandlerName(bestMatchHandler);
+		
+		return "peltasprocessing";
 	}
 }

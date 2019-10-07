@@ -34,6 +34,7 @@ import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,6 +43,7 @@ import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.core.GenericMessagingTemplate;
+import org.springframework.messaging.core.MessageSendingOperations;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.util.StringUtils;
@@ -75,6 +77,7 @@ public abstract class AbstractPeltasBatchConfiguration<I, O> {
 	private ItemWriter<O> writer;
 
 	@Bean
+	@ConditionalOnMissingBean(MessageSendingOperations.class)
 	public GenericMessagingTemplate messagingTemplate(BeanFactory beanFactory) {
 		GenericMessagingTemplate template = new GenericMessagingTemplate();
 		template.setBeanFactory(beanFactory);

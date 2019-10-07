@@ -52,7 +52,7 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 
 	@Override
 	protected void doWithMessage(MessageBuilder<PeltasEntry> messageBuilder) {
-		messageBuilder.setHeader("alfresco.handler.configuration", new PeltasHandlerProperties());
+		messageBuilder.setHeader("peltas.handler.configuration", new PeltasHandlerProperties());
 	}
 
 	@Override
