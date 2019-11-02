@@ -18,6 +18,7 @@ package io.peltas.alfresco.access;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
@@ -38,6 +40,7 @@ import io.peltas.alfresco.config.PeltastTestConfig;
 import io.peltas.core.alfresco.PeltasEntry;
 import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
 import io.peltas.core.alfresco.config.PeltasHandlerProperties;
+import io.peltas.core.alfresco.integration.PeltasFormatUtil;
 import io.peltas.core.alfresco.integration.PeltasHandler;
 import io.peltas.core.batch.PeltasDataHolder;
 
@@ -49,6 +52,12 @@ public class PeltasPropertyMapperMoveActionTest {
 
 	@Autowired
 	PeltasHandlerConfigurationProperties pipeline;
+	
+	@Autowired
+	List<Converter<?,?>> converters;
+	
+	@Autowired
+	PeltasFormatUtil peltasFormatUtil;
 
 	@Test
 	public void missingPropertyValue() {
@@ -68,7 +77,7 @@ public class PeltasPropertyMapperMoveActionTest {
 
 		assertThat(documentcreatedHandler).isEqualTo("documentmove");
 
-		PeltasHandler handler = new PeltasHandler();
+		PeltasHandler handler = new PeltasHandler(converters, peltasFormatUtil);
 
 		Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
 				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();
@@ -109,7 +118,7 @@ public class PeltasPropertyMapperMoveActionTest {
 
 		assertThat(documentcreatedHandler).isEqualTo("documentmove");
 
-		PeltasHandler handler = new PeltasHandler();
+		PeltasHandler handler = new PeltasHandler(converters, peltasFormatUtil);
 
 		Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
 				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();

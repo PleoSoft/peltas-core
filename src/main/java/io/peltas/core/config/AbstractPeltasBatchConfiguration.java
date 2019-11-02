@@ -16,6 +16,7 @@
 
 package io.peltas.core.config;
 
+import java.io.IOException;
 import java.util.Date;
 
 import javax.sql.DataSource;
@@ -38,6 +39,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
@@ -45,9 +48,10 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.core.GenericMessagingTemplate;
 import org.springframework.messaging.core.MessageSendingOperations;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.util.StringUtils;
 
+import io.peltas.core.alfresco.PeltasScheduler;
+import io.peltas.core.alfresco.integration.PeltasFormatUtil;
 import io.peltas.core.batch.ItemRouter;
 import io.peltas.core.batch.PeltasItemProcessor;
 import io.peltas.core.batch.PeltasListener;
@@ -56,6 +60,8 @@ import io.peltas.core.repository.database.CustomDatasourceProperties;
 import io.peltas.core.repository.database.PeltasTimestamp;
 
 @Configuration
+@PropertySource(ignoreResourceNotFound = true, value = { "classpath:/io/peltas/peltas.properties" })
+@Import(DefaultConvertersConfiguration.class)
 public abstract class AbstractPeltasBatchConfiguration<I, O> {
 
 	@Autowired
@@ -85,6 +91,7 @@ public abstract class AbstractPeltasBatchConfiguration<I, O> {
 	}
 
 	@Bean
+	@ConditionalOnMissingBean(ItemRouter.class)
 	public ItemRouter<I> router() {
 		return new ItemRouter<I>() {
 			@Override
@@ -115,10 +122,16 @@ public abstract class AbstractPeltasBatchConfiguration<I, O> {
 	}
 
 	@Bean
-	public Job job() throws Exception {
+	public Job job(PeltasListener<I, O> listener) throws Exception {
 		return jobBuilderFactory.get("peltas.entry").repository(jobRepository).start(
-				step(jobRepository, stepBuilderFactory, platformTransactionManager, writer, processor(), listener()))
+				step(jobRepository, stepBuilderFactory, platformTransactionManager, writer, processor(), listener))
 				.build();
+	}
+
+	@Bean
+	@ConditionalOnProperty(value = "peltas.scheduler.enabled", matchIfMissing = true)
+	public Object scheduler(PeltasListener<I, O> listener) throws IOException, Exception {
+		return new PeltasScheduler(jobLauncher, job(listener));
 	}
 
 	public Step step(JobRepository jobRepository, StepBuilderFactory stepBuilderFactory,
@@ -146,9 +159,9 @@ public abstract class AbstractPeltasBatchConfiguration<I, O> {
 
 	protected JobExecution startJob(JobParameters jobParameters, JobRepository jobRepository,
 			JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory,
-			PlatformTransactionManager platformTransactionManager) {
+			PlatformTransactionManager platformTransactionManager, PeltasListener<I, O> listener) {
 		try {
-			JobExecution run = jobLauncher.run(job(), jobParameters);
+			JobExecution run = jobLauncher.run(job(listener), jobParameters);
 			return run;
 		} catch (Throwable e) {
 			System.exit(-1);
@@ -157,9 +170,9 @@ public abstract class AbstractPeltasBatchConfiguration<I, O> {
 		return null;
 	}
 
-	public JobExecution launchJob() {
+	public JobExecution launchJob(PeltasListener<I, O> listener) {
 		JobExecution run = startJob(getJobParameters(), jobRepository, jobBuilderFactory, stepBuilderFactory,
-				platformTransactionManager);
+				platformTransactionManager, listener);
 		return run;
 	}
 
@@ -177,5 +190,10 @@ public abstract class AbstractPeltasBatchConfiguration<I, O> {
 				ResourceLoader resourceLoader) {
 			return new CustomDatasourceInitializer(dataSource, resourceLoader, peltasCustomDatasourceProperties());
 		}
+	}
+
+	@Bean
+	public PeltasFormatUtil peltasFormatUtil() {
+		return new PeltasFormatUtil();
 	}
 }

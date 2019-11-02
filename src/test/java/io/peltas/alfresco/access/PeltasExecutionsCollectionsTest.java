@@ -39,6 +39,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -57,6 +58,7 @@ import io.peltas.core.alfresco.PeltasEntry;
 import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
 import io.peltas.core.alfresco.config.PeltasHandlerProperties;
 import io.peltas.core.alfresco.config.PipelineCollection;
+import io.peltas.core.alfresco.integration.PeltasFormatUtil;
 import io.peltas.core.alfresco.integration.PeltasHandler;
 import io.peltas.core.batch.PeltasDataHolder;
 import io.peltas.core.repository.database.PeltasJdbcWriter;
@@ -76,6 +78,12 @@ public class PeltasExecutionsCollectionsTest {
 	@Value("classpath:io/peltas/executions/**.sql")
 	Resource[] resources;
 
+	@Autowired
+	List<Converter<?, ?>> converters;
+
+	@Autowired
+	PeltasFormatUtil peltasFormatUtil;
+
 	@BeforeEach
 	public void setup() {
 		doAnswer(new Answer<Map<String, Object>>() {
@@ -92,7 +100,7 @@ public class PeltasExecutionsCollectionsTest {
 	public PeltasDataHolder getAuditHolderForAuditEntry(PeltasEntry entry) {
 		final String documentcreatedHandler = properties.findFirstBestMatchHandler(entry);
 
-		final PeltasHandler handler = new PeltasHandler();
+		final PeltasHandler handler = new PeltasHandler(converters, peltasFormatUtil);
 
 		final Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
 				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();
@@ -116,7 +124,7 @@ public class PeltasExecutionsCollectionsTest {
 		final Builder<String, Object> documentcreatedValues = ImmutableMap.<String, Object>builder();
 		documentcreatedValues
 				.put("/alfresco-access/transaction/properties/add",
-						ImmutableMap.of("{http://www.alfresco.org/model/content/1.0}description", "{en=description}",
+						ImmutableMap.of("{http://www.alfresco.org/model/content/1.0}description", ImmutableMap.of("en", "description"),
 								"{http://www.alfresco.org/model/content/1.0}created", "Thu Jun 14 13:44:58 UTC 2018",
 								"{http://www.alfresco.org/model/system/1.0}store-protocol", "workspace",
 								"{http://www.alfresco.org/model/system/1.0}store-identifier", "SpacesStore",
@@ -127,8 +135,8 @@ public class PeltasExecutionsCollectionsTest {
 				.put("/alfresco-access/transaction/path", "cm:app/test")
 				.put("/alfresco-access/transaction/user", "admin")
 				.put("/alfresco-access/transaction/aspects/add",
-						ImmutableList.of("{http://www.alfresco.org/model/content/1.0}indexControl",
-								"{http://www.alfresco.org/model/content/1.0}ownable"))
+						ImmutableList.of(ImmutableMap.of("prefixString", "cm", "localName", "indexControl"),
+								ImmutableMap.of("prefixString", "cm", "localName", "ownable")))
 				.put("/alfresco-access/login/user", "test");
 		entry.setValues(documentcreatedValues.build());
 

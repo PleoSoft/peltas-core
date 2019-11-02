@@ -16,30 +16,22 @@
 
 package io.peltas.core.alfresco.integration;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.integration.annotation.ServiceActivator;
-import org.springframework.integration.transformer.ObjectToMapTransformer;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.support.GenericMessage;
 import org.springframework.util.StringUtils;
-
-import com.google.common.collect.ImmutableMap;
 
 import io.peltas.core.alfresco.PeltasEntry;
 import io.peltas.core.alfresco.StringToMapUtil;
@@ -52,90 +44,16 @@ public class PeltasHandler {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PeltasHandler.class);
 
-	private final DefaultFormattingConversionService conversionService;
+	private final DefaultFormattingConversionService conversionService;	
+	private final PeltasFormatUtil peltasFormatUtil;
 
-	private final ThreadLocal<String> CURRENT_FORMAT = new ThreadLocal<>();
-
-	public PeltasHandler() {
+	public PeltasHandler(List<Converter<?, ?>> converters, PeltasFormatUtil peltasFormatUtil) {
+		this.peltasFormatUtil = peltasFormatUtil;
 		this.conversionService = new DefaultFormattingConversionService();
 
-		// TODO FIXME move to audit
-		this.conversionService.addConverter(new Converter<String, HashMap<String, Object>>() {
-			@Override
-			public HashMap<String, Object> convert(String source) {
-				LOGGER.trace("converting String -> HashMap: {}", source);
-
-				final HashMap<String, Object> map = new HashMap<>();
-				if (StringUtils.hasText(source)) {
-					final Map<String, Object> stringToMap = StringToMapUtil.stringToMap(source, ',');
-					map.putAll(stringToMap);
-				}
-
-				return map;
-			}
-		});
-
-		this.conversionService.addConverter(new Converter<String, Date>() {
-			@Override
-			public Date convert(String source) {
-				final String initialFormat = CURRENT_FORMAT.get();
-				String format = initialFormat;
-				if (!StringUtils.hasText(format)) {
-					format = "EEE MMM dd HH:mm:ss zzz yyyy"; // old audit
-				}
-				try {
-					LOGGER.trace("converting String -> Date: {} with format: {}", source, format);
-					return new SimpleDateFormat(format, Locale.ENGLISH).parse(source);
-				} catch (final ParseException e) {
-					if (StringUtils.hasText(initialFormat)) {
-						throw new PeltasConversionException(e);
-					}
-					format = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"; // v1
-					try {
-						LOGGER.trace("converting String -> Date: {} with format: {}", source, format);
-						return new SimpleDateFormat(format).parse(source);
-					} catch (final ParseException e1) {
-						try {
-							format = "yyyy-MM-dd'T'HH:mm:ss.SSS";
-							LOGGER.trace("converting String -> Date: {} with format: {}", source, format);
-							return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").parse(source);
-						} catch (final ParseException e2) {
-							throw new PeltasConversionException(e2);
-						}
-					}
-				}
-			}
-		});
-
-		this.conversionService.addConverter(new Converter<Date, String>() {
-			@Override
-			public String convert(Date source) {
-				final String format = CURRENT_FORMAT.get();
-				LOGGER.trace("converting Date -> String: {} with format: {}", source, format);
-				return new SimpleDateFormat(format).format(source);
-			}
-		});
-
-		this.conversionService.addConverter(new Converter<HashMap<String, Object>, Collection<?>>() {
-			@Override
-			public Collection<?> convert(HashMap<String, Object> source) {
-				LOGGER.trace("converting HashMap -> Collection : {}", source);
-				final ObjectToMapTransformer transformer = new ObjectToMapTransformer();
-				transformer.setShouldFlattenKeys(true);
-				final Message<Map<String, Object>> message = new GenericMessage<Map<String, Object>>(source);
-
-				@SuppressWarnings("unchecked")
-				final Map<String, Object> payload = (Map<String, Object>) transformer.transform(message).getPayload();
-				final Set<Map.Entry<String, Object>> entrySet = payload.entrySet();
-
-				final ArrayList<Map<String, Object>> list = new ArrayList<>();
-				for (final Map.Entry<String, Object> entry : entrySet) {
-					final Object value = entry.getValue() != null ? entry.getValue() : "";
-					list.add(ImmutableMap.of("key", entry.getKey(), "value", value));
-				}
-				return list;
-			}
-		});
+		for (Converter<?, ?> converter : converters) {
+			this.conversionService.addConverter(converter);
+		}
 	}
 
 	@ServiceActivator(inputChannel = "peltasprocessing")
@@ -230,16 +148,20 @@ public class PeltasHandler {
 		final Class<?> convertClass = expresionProperty.getType();
 		if (convertClass != null) {
 			final String format = expresionProperty.getFormat();
+			final List<String> formatKeys = expresionProperty.getFormatKeys();
 			// if(value.getClass().isAssignableFrom(convertClass) && format ==
 			// null){
 			// return;
 			// }
-			CURRENT_FORMAT.set(format);
+			
+			peltasFormatUtil.setCurrentFormat(format);
+			peltasFormatUtil.setCurrentFormatKeys(formatKeys);			
 			LOGGER.trace("convertValue() converting {} -> {} value {} using format {}", value.getClass(), convertClass,
 					value, format);
 			value = conversionService.convert(value, convertClass);
 			LOGGER.trace("convertValue() converted {}", value);
-			CURRENT_FORMAT.set(null);
+			peltasFormatUtil.setCurrentFormat(null);
+			peltasFormatUtil.setCurrentFormatKeys(null);
 		}
 
 		if (value != null) {

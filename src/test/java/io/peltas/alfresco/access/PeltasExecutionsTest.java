@@ -40,6 +40,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -58,6 +59,7 @@ import io.peltas.core.alfresco.PeltasEntry;
 import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
 import io.peltas.core.alfresco.config.PeltasHandlerProperties;
 import io.peltas.core.alfresco.config.PipelineCollection;
+import io.peltas.core.alfresco.integration.PeltasFormatUtil;
 import io.peltas.core.alfresco.integration.PeltasHandler;
 import io.peltas.core.batch.PeltasDataHolder;
 import io.peltas.core.repository.database.PeltasJdbcWriter;
@@ -77,10 +79,16 @@ public class PeltasExecutionsTest {
 	@Value("classpath:io/peltas/executions/**.sql")
 	Resource[] resources;
 
+	@Autowired
+	List<Converter<?, ?>> converters;
+
+	@Autowired
+	PeltasFormatUtil peltasFormatUtil;
+
 	public PeltasDataHolder getAuditHolderForAuditEntry(PeltasEntry entry) {
 		final String documentcreatedHandler = properties.findFirstBestMatchHandler(entry);
 
-		final PeltasHandler handler = new PeltasHandler();
+		final PeltasHandler handler = new PeltasHandler(converters, peltasFormatUtil);
 
 		final Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
 				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();
@@ -117,14 +125,12 @@ public class PeltasExecutionsTest {
 		entry.setApplication("test");
 
 		final Builder<String, Object> documentcreatedValues = ImmutableMap.<String, Object>builder();
-		documentcreatedValues
-				.put("/alfresco-access/transaction/properties/add",
-						ImmutableMap.of("{http://www.alfresco.org/model/content/1.0}description", "{en=description}",
-								"{http://www.alfresco.org/model/content/1.0}created", "Thu Jun 14 13:44:58 UTC 2018",
-								"{http://www.alfresco.org/model/system/1.0}store-protocol", "workspace",
-								"{http://www.alfresco.org/model/system/1.0}store-identifier", "SpacesStore",
-								"{http://www.alfresco.org/model/system/1.0}node-uuid",
-								"09ea11d8-810c-4e72-a9cc-ee8435af0963"))
+		documentcreatedValues.put("/alfresco-access/transaction/properties/add",
+				ImmutableMap.of("{http://www.alfresco.org/model/content/1.0}description",
+						ImmutableMap.of("en", "description"), "{http://www.alfresco.org/model/content/1.0}created",
+						"Thu Jun 14 13:44:58 UTC 2018", "{http://www.alfresco.org/model/system/1.0}store-protocol",
+						"workspace", "{http://www.alfresco.org/model/system/1.0}store-identifier", "SpacesStore",
+						"{http://www.alfresco.org/model/system/1.0}node-uuid", "09ea11d8-810c-4e72-a9cc-ee8435af0963"))
 				.put("/alfresco-access/transaction/type", "cm:content")
 				.put("/alfresco-access/transaction/action", "CREATE")
 				.put("/alfresco-access/transaction/path", "cm:app/test")
@@ -159,14 +165,12 @@ public class PeltasExecutionsTest {
 		entry.setApplication("test");
 
 		final Builder<String, Object> documentcreatedValues = ImmutableMap.<String, Object>builder();
-		documentcreatedValues
-				.put("/alfresco-access/transaction/properties/add",
-						ImmutableMap.of("{http://www.alfresco.org/model/content/1.0}description", "{en=description}",
-								"{http://www.alfresco.org/model/content/1.0}created", "Thu Jun 14 13:44:58 UTC 2018",
-								"{http://www.alfresco.org/model/system/1.0}store-protocol", "workspace",
-								"{http://www.alfresco.org/model/system/1.0}store-identifier", "SpacesStore",
-								"{http://www.alfresco.org/model/system/1.0}node-uuid",
-								"09ea11d8-810c-4e72-a9cc-ee8435af0963"))
+		documentcreatedValues.put("/alfresco-access/transaction/properties/add",
+				ImmutableMap.of("{http://www.alfresco.org/model/content/1.0}description",
+						ImmutableMap.of("en", "description"), "{http://www.alfresco.org/model/content/1.0}created",
+						"Thu Jun 14 13:44:58 UTC 2018", "{http://www.alfresco.org/model/system/1.0}store-protocol",
+						"workspace", "{http://www.alfresco.org/model/system/1.0}store-identifier", "SpacesStore",
+						"{http://www.alfresco.org/model/system/1.0}node-uuid", "09ea11d8-810c-4e72-a9cc-ee8435af0963"))
 				.put("/alfresco-access/transaction/type", "cm:content")
 				.put("/alfresco-access/transaction/action", "CREATE")
 				.put("/alfresco-access/transaction/path", "cm:app/test")
@@ -209,8 +213,8 @@ public class PeltasExecutionsTest {
 				.put("/alfresco-access/transaction/path", "cm:app/test")
 				.put("/alfresco-access/transaction/user", "admin")
 				.put("/alfresco-access/transaction/aspects/add",
-						ImmutableList.of("{http://www.alfresco.org/model/content/1.0}indexControl",
-								"{http://www.alfresco.org/model/content/1.0}ownable"))
+						ImmutableList.of(ImmutableMap.of("prefixString", "cm", "localName", "indexControl"),
+								ImmutableMap.of("prefixString", "cm", "localName", "ownable")))
 				// TODO ovo treba provjeriti
 				// "[{http://www.alfresco.org/model/content/1.0}indexControl,
 				// {http://www.alfresco.org/model/content/1.0}ownable]")
@@ -250,14 +254,12 @@ public class PeltasExecutionsTest {
 		entry.setApplication("test");
 
 		final Builder<String, Object> documentcreatedValues = ImmutableMap.<String, Object>builder();
-		documentcreatedValues
-				.put("/alfresco-access/transaction/properties/add",
-						ImmutableMap.of("{http://www.alfresco.org/model/content/1.0}description", "{en=description}",
-								"{http://www.alfresco.org/model/content/1.0}created", "Thu Jun 14 13:44:58 UTC 2018",
-								"{http://www.alfresco.org/model/system/1.0}store-protocol", "workspace",
-								"{http://www.alfresco.org/model/system/1.0}store-identifier", "SpacesStore",
-								"{http://www.alfresco.org/model/system/1.0}node-uuid",
-								"09ea11d8-810c-4e72-a9cc-ee8435af0963"))
+		documentcreatedValues.put("/alfresco-access/transaction/properties/add",
+				ImmutableMap.of("{http://www.alfresco.org/model/content/1.0}description",
+						ImmutableMap.of("en", "description"), "{http://www.alfresco.org/model/content/1.0}created",
+						"Thu Jun 14 13:44:58 UTC 2018", "{http://www.alfresco.org/model/system/1.0}store-protocol",
+						"workspace", "{http://www.alfresco.org/model/system/1.0}store-identifier", "SpacesStore",
+						"{http://www.alfresco.org/model/system/1.0}node-uuid", "09ea11d8-810c-4e72-a9cc-ee8435af0963"))
 				.put("/alfresco-access/transaction/type", "cm:content")
 				.put("/alfresco-access/transaction/action", "updateNodeProperties")
 				.put("/alfresco-access/transaction/path", "cm:app/test")

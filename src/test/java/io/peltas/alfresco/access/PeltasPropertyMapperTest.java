@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
@@ -43,6 +45,7 @@ import io.peltas.core.alfresco.PeltasEntry;
 import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
 import io.peltas.core.alfresco.config.PeltasHandlerProperties;
 import io.peltas.core.alfresco.integration.PeltasConversionException;
+import io.peltas.core.alfresco.integration.PeltasFormatUtil;
 import io.peltas.core.alfresco.integration.PeltasHandler;
 import io.peltas.core.batch.PeltasDataHolder;
 
@@ -54,19 +57,23 @@ public class PeltasPropertyMapperTest {
 
 	@Autowired
 	PeltasHandlerConfigurationProperties pipeline;
+	
+	@Autowired
+	List<Converter<?,?>> converters;
+	
+	@Autowired
+	PeltasFormatUtil peltasFormatUtil;
 
 	@Test
 	public void checkPropertyMapping_alfrescoAuditHolderIsNotNullAndContainsMappedProperties() {
 		PeltasEntry entry = new PeltasEntry();
 
-		ImmutableMap<String, Object> content = ImmutableMap.<String, Object>of("mimetype", "text/xml"); // v2
-																										// test
+		ImmutableMap<String, Object> content = ImmutableMap.<String, Object>of("mimetype", "text/xml");
 
 		Builder<String, Object> documentcreatedValues = ImmutableMap.<String, Object>builder();
 
 		Builder<String, Object> propValues = ImmutableMap.<String, Object>builder();
-		propValues.put("{http://www.alfresco.org/model/content/1.0}description", "{en=description}") // v1
-																										// test
+		propValues.put("{http://www.alfresco.org/model/content/1.0}description", ImmutableMap.of("en", "description"))
 				.put("{http://www.alfresco.org/model/content/1.0}created", "Thu Jun 14 13:44:58 UTC 2018")
 				.put("{http://www.alfresco.org/model/system/1.0}store-protocol", "workspace")
 				.put("{http://www.alfresco.org/model/system/1.0}store-identifier", "SpacesStore")
@@ -81,7 +88,7 @@ public class PeltasPropertyMapperTest {
 		String documentcreatedHandler = pipeline.findFirstBestMatchHandler(entry);
 		assertThat(documentcreatedHandler).isEqualTo("documentcreated");
 
-		PeltasHandler handler = new PeltasHandler();
+		PeltasHandler handler = new PeltasHandler(converters, peltasFormatUtil);
 
 		Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
 				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();
@@ -136,7 +143,7 @@ public class PeltasPropertyMapperTest {
 		String documentcreatedHandler = pipeline.findFirstBestMatchHandler(entry);
 		assertThat(documentcreatedHandler).isEqualTo("documentcreated");
 
-		PeltasHandler handler = new PeltasHandler();
+		PeltasHandler handler = new PeltasHandler(converters, peltasFormatUtil);
 
 		Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
 				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();
@@ -168,7 +175,7 @@ public class PeltasPropertyMapperTest {
 		String documentcreatedHandler = pipeline.findFirstBestMatchHandler(entry);
 		assertThat(documentcreatedHandler).isEqualTo("documentcreated");
 
-		PeltasHandler handler = new PeltasHandler();
+		PeltasHandler handler = new PeltasHandler(converters, peltasFormatUtil);
 
 		Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
 				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();
@@ -206,7 +213,7 @@ public class PeltasPropertyMapperTest {
 		String documentcreatedHandler = pipeline.findFirstBestMatchHandler(entry);
 		assertThat(documentcreatedHandler).isEqualTo("datetest");
 
-		PeltasHandler handler = new PeltasHandler();
+		PeltasHandler handler = new PeltasHandler(converters, peltasFormatUtil);
 
 		Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
 				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();
@@ -243,7 +250,7 @@ public class PeltasPropertyMapperTest {
 
 		assertThat(documentcreatedHandler).isEqualTo("emptyprop");
 
-		PeltasHandler handler = new PeltasHandler();
+		PeltasHandler handler = new PeltasHandler(converters, peltasFormatUtil);
 
 		Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
 				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();
@@ -281,7 +288,7 @@ public class PeltasPropertyMapperTest {
 
 		assertThat(documentcreatedHandler).isEqualTo("nullprop");
 
-		PeltasHandler handler = new PeltasHandler();
+		PeltasHandler handler = new PeltasHandler(converters, peltasFormatUtil);
 
 		Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
 				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();

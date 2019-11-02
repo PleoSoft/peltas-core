@@ -16,6 +16,8 @@
 
 package io.peltas.core.alfresco.config;
 
+import java.util.Collections;
+
 public class PeltasHandlerProperties {
 	private String evaluator;
 	private PeltasMapper mapper;
@@ -39,6 +41,11 @@ public class PeltasHandlerProperties {
 	}
 
 	public Pipeline getPipeline() {
+		if(pipeline == null && handlerName != null) {
+			Pipeline handlerOnlyPipeline = new Pipeline();
+			handlerOnlyPipeline.setExecutions(Collections.singletonList(handlerName));
+			return handlerOnlyPipeline;
+		}
 		return pipeline;
 	}
 

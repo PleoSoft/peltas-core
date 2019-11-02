@@ -16,10 +16,12 @@
 
 package io.peltas.core.alfresco.config;
 
+import java.util.Collections;
 import java.util.List;
 
 public class PeltasExpresionProperty {
 	private String format = null;
+	private List<String> formatKeys = Collections.singletonList(",");
 	private List<String> data;
 	private Class<?> type = String.class;
 
@@ -46,7 +48,15 @@ public class PeltasExpresionProperty {
 	public void setType(Class<?> type) {
 		this.type = type;
 	}
-
+	
+	public List<String> getFormatKeys() {
+		return formatKeys;
+	}
+	
+	public void setFormatKeys(List<String> formatKeys) {
+		this.formatKeys = formatKeys;
+	}
+	
 	@Override
 	public String toString() {
 		return "PeltasExpresionProperty [format=" + format + ", data=" + data + ", type=" + type + "]";

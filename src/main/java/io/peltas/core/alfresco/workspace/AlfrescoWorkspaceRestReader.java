@@ -288,6 +288,12 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Peltas
 		if (livedataMetadata.getNodeRef() != null) {
 			builder.put("/alfresco-workspace/transaction/path", livedataMetadata.getNodeRef());
 			builder.put("/alfresco-workspace/transaction/nodeRef", livedataMetadata.getNodeRef());
+
+			int lastIndexOf = livedataMetadata.getNodeRef().lastIndexOf("/");
+			if (lastIndexOf != -1) {
+				String nodeId = livedataMetadata.getNodeRef().substring(lastIndexOf + 1);
+				builder.put("/alfresco-workspace/transaction/nodeId", nodeId);
+			}
 		}
 
 		auditEntry.setValues(builder.build());

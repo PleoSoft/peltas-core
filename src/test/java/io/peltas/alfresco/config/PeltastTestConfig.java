@@ -18,13 +18,19 @@ package io.peltas.alfresco.config;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
 import io.peltas.core.alfresco.config.expression.ContainsExpressionEvaluator;
 import io.peltas.core.alfresco.config.expression.EqualsExpressionEvaluator;
 import io.peltas.core.alfresco.config.expression.EvaluatorExpressionRegistry;
+import io.peltas.core.alfresco.integration.PeltasFormatUtil;
+import io.peltas.core.config.DefaultConvertersConfiguration;
 
+@Configuration
 @EnableConfigurationProperties
+@Import(DefaultConvertersConfiguration.class)
 public class PeltastTestConfig {
 
 	@Bean
@@ -42,4 +48,10 @@ public class PeltastTestConfig {
 	public PeltasHandlerConfigurationProperties alfrescoHandlerProperties() {
 		return new PeltasHandlerConfigurationProperties(evaluatorExpressionRegistry());
 	}
+
+	@Bean
+	public PeltasFormatUtil peltasFormatUtil() {
+		return new PeltasFormatUtil();
+	}
+
 }

@@ -16,26 +16,33 @@
 
 package io.peltas.core.alfresco.config;
 
-import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.messaging.core.GenericMessagingTemplate;
+import org.springframework.util.StringUtils;
 
 import io.peltas.core.alfresco.PeltasEntry;
 import io.peltas.core.alfresco.PeltasException;
-import io.peltas.core.alfresco.PeltasScheduler;
+import io.peltas.core.alfresco.StringToMapUtil;
 import io.peltas.core.alfresco.config.expression.ContainsExpressionEvaluator;
 import io.peltas.core.alfresco.config.expression.EqualsExpressionEvaluator;
 import io.peltas.core.alfresco.config.expression.EvaluatorExpressionRegistry;
 import io.peltas.core.alfresco.integration.DoNotProcessHandler;
+import io.peltas.core.alfresco.integration.PeltasFormatUtil;
 import io.peltas.core.alfresco.integration.PeltasHandler;
 import io.peltas.core.alfresco.integration.PeltasRouter;
 import io.peltas.core.batch.ItemRouter;
@@ -46,6 +53,9 @@ import io.peltas.core.config.AbstractPeltasBatchConfiguration;
 import io.peltas.core.repository.TxDataRepository;
 
 // @Aspect FIXME: check pointcut for stopping
+@Configuration
+@PropertySource(ignoreResourceNotFound = true, value = { "classpath:/io/peltas/peltas-alfresco.properties" })
+@Import(AlfrescoDefaultConvertersConfiguration.class)
 public abstract class AbstractAlfrescoPeltasConfiguration
 		extends AbstractPeltasBatchConfiguration<PeltasEntry, PeltasDataHolder> {
 
@@ -55,9 +65,6 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 
 	@Autowired
 	protected GenericMessagingTemplate messagingTemplate;
-
-	@Autowired
-	private JobLauncher jobLauncher;
 
 	@Value("${peltas.chunksize}")
 	protected Integer chunkSize;
@@ -75,6 +82,7 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 	}
 
 	@Bean
+	@ConditionalOnMissingBean(EvaluatorExpressionRegistry.class)
 	public EvaluatorExpressionRegistry evaluatorExpressionRegistry() {
 		EqualsExpressionEvaluator equalsExpressionEvaluator = new EqualsExpressionEvaluator();
 
@@ -91,19 +99,36 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 	}
 
 	@Bean
+	public AlfrescoModelConfigurationProperties alfrescoModelConfigurationProperties() {
+		return new AlfrescoModelConfigurationProperties();
+	}
+
+	@Bean
 	public PeltasProperties alfrescoAuditProperties() {
 		return new PeltasProperties();
 	}
 
 	@Bean
-	public PeltasHandler auditProcessorHandler() {
-		return new PeltasHandler();
+	public Converter<?, ?> stringToMapConverter() {
+		return new Converter<String, HashMap<String, Object>>() {
+			@Override
+			public HashMap<String, Object> convert(String source) {
+				LOGGER.trace("converting String -> HashMap: {}", source);
+
+				final HashMap<String, Object> map = new HashMap<>();
+				if (StringUtils.hasText(source)) {
+					final Map<String, Object> stringToMap = StringToMapUtil.stringToMap(source, ',');
+					map.putAll(stringToMap);
+				}
+
+				return map;
+			}
+		};
 	}
 
 	@Bean
-	@ConditionalOnProperty(value = "peltas.scheduler.enabled", matchIfMissing = true)
-	public Object scheduler() throws IOException, Exception {
-		return new PeltasScheduler(jobLauncher, job());
+	public PeltasHandler auditProcessorHandler(List<Converter<?, ?>> converters, PeltasFormatUtil peltasFormatUtil) {
+		return new PeltasHandler(converters, peltasFormatUtil);
 	}
 
 	@AfterThrowing(value = "(execution(* io.peltas.alfresco.access..*(..)))", throwing = "e")
