@@ -19,13 +19,13 @@ package io.peltas.core.alfresco.config;
 import java.util.Map;
 
 public class PeltasMapper {
-	private Map<String, PeltasExpresionProperty> property;
+	private Map<String, PeltasExpressionProperty> property;
 
-	public Map<String, PeltasExpresionProperty> getProperty() {
+	public Map<String, PeltasExpressionProperty> getProperty() {
 		return property;
 	}
 
-	public void setProperty(Map<String, PeltasExpresionProperty> property) {
+	public void setProperty(Map<String, PeltasExpressionProperty> property) {
 		this.property = property;
 	}
 }

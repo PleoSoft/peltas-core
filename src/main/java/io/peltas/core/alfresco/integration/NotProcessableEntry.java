@@ -18,13 +18,13 @@ package io.peltas.core.alfresco.integration;
 
 import java.util.Collections;
 
-import io.peltas.core.alfresco.config.PeltasExpresionProperty;
+import io.peltas.core.alfresco.config.PeltasExpressionProperty;
 import io.peltas.core.batch.PeltasDataHolder;
 
 class NotProcessableEntry extends PeltasDataHolder implements DoNotProcessMarker {
 
 	protected NotProcessableEntry() {
-		super(null, Collections.<String, PeltasExpresionProperty>emptyMap(), Collections.<String, Object>emptyMap(),
+		super(null, Collections.<String, PeltasExpressionProperty>emptyMap(), Collections.<String, Object>emptyMap(),
 				null);
 	}
 }

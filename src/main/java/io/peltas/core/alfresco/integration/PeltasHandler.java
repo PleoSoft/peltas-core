@@ -26,7 +26,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.integration.annotation.ServiceActivator;
@@ -35,7 +34,7 @@ import org.springframework.util.StringUtils;
 
 import io.peltas.core.alfresco.PeltasEntry;
 import io.peltas.core.alfresco.StringToMapUtil;
-import io.peltas.core.alfresco.config.PeltasExpresionProperty;
+import io.peltas.core.alfresco.config.PeltasExpressionProperty;
 import io.peltas.core.alfresco.config.PeltasHandlerProperties;
 import io.peltas.core.alfresco.config.PeltasMapper;
 import io.peltas.core.batch.PeltasDataHolder;
@@ -68,7 +67,7 @@ public class PeltasHandler {
 		final Map<String, Object> mappedProperties = new HashMap<>();
 		try {
 
-			final Map<String, PeltasExpresionProperty> configuredProperties = mapper.getProperty();
+			final Map<String, PeltasExpressionProperty> configuredProperties = mapper.getProperty();
 			processProperties(auditEntry, configuredProperties, mappedProperties);
 
 			LOGGER.trace("handle() properties configured {} -  mapped {}", configuredProperties, mappedProperties);
@@ -79,16 +78,16 @@ public class PeltasHandler {
 
 	}
 
-	private void processProperties(PeltasEntry auditEntry, Map<String, PeltasExpresionProperty> properties,
+	private void processProperties(PeltasEntry auditEntry, Map<String, PeltasExpressionProperty> properties,
 			Map<String, Object> builder) {
-		final Set<Entry<String, PeltasExpresionProperty>> propertyEntries = properties.entrySet();
+		final Set<Entry<String, PeltasExpressionProperty>> propertyEntries = properties.entrySet();
 
-		final Map<String, PeltasExpresionProperty> postProcessProps = new HashMap<>();
+		final Map<String, PeltasExpressionProperty> postProcessProps = new HashMap<>();
 
-		for (final Entry<String, PeltasExpresionProperty> entry : propertyEntries) {
+		for (final Entry<String, PeltasExpressionProperty> entry : propertyEntries) {
 
 			final String key = entry.getKey();
-			final PeltasExpresionProperty expresionProperty = entry.getValue();
+			final PeltasExpressionProperty expresionProperty = entry.getValue();
 			final List<String> exprData = expresionProperty.getData();
 			final List<Object> dataValues = new ArrayList<>();
 			for (String data : exprData) {
@@ -119,7 +118,7 @@ public class PeltasHandler {
 		}
 	}
 
-	private void convertStringValues(Map<String, Object> builder, String key, PeltasExpresionProperty expresionProperty,
+	private void convertStringValues(Map<String, Object> builder, String key, PeltasExpressionProperty expresionProperty,
 			List<Object> dataValues) {
 		Object value = null;
 		if (dataValues != null && !dataValues.isEmpty()) {
@@ -139,7 +138,7 @@ public class PeltasHandler {
 	}
 
 	private void convertValue(Object value, Map<String, Object> builder, String key,
-			PeltasExpresionProperty expresionProperty) {
+			PeltasExpressionProperty expresionProperty) {
 		if (value == null) {
 			builder.put(key, null);
 			return;
@@ -179,12 +178,12 @@ public class PeltasHandler {
 		}
 	}
 
-	private void postProcessProperties(PeltasEntry auditEntry, Map<String, PeltasExpresionProperty> properties,
+	private void postProcessProperties(PeltasEntry auditEntry, Map<String, PeltasExpressionProperty> properties,
 			Map<String, Object> builder) {
 
-		final Set<Entry<String, PeltasExpresionProperty>> propertyEntries = properties.entrySet();
-		for (final Entry<String, PeltasExpresionProperty> entry : propertyEntries) {
-			final PeltasExpresionProperty expresionProperty = entry.getValue();
+		final Set<Entry<String, PeltasExpressionProperty>> propertyEntries = properties.entrySet();
+		for (final Entry<String, PeltasExpressionProperty> entry : propertyEntries) {
+			final PeltasExpressionProperty expresionProperty = entry.getValue();
 
 			final List<String> exprData = expresionProperty.getData();
 			if (exprData.size() == 0) {

@@ -20,17 +20,17 @@ import java.util.Collections;
 import java.util.Map;
 
 import io.peltas.core.alfresco.PeltasEntry;
-import io.peltas.core.alfresco.config.PeltasExpresionProperty;
+import io.peltas.core.alfresco.config.PeltasExpressionProperty;
 import io.peltas.core.alfresco.config.PeltasHandlerProperties;
 
 public class PeltasDataHolder {
 
 	private final PeltasEntry auditEntry;
-	private final Map<String, PeltasExpresionProperty> properties;
+	private final Map<String, PeltasExpressionProperty> properties;
 	private final Map<String, Object> builder;
 	private final PeltasHandlerProperties config;
 
-	public PeltasDataHolder(PeltasEntry auditEntry, Map<String, PeltasExpresionProperty> properties,
+	public PeltasDataHolder(PeltasEntry auditEntry, Map<String, PeltasExpressionProperty> properties,
 			Map<String, Object> builder, PeltasHandlerProperties config) {
 		this.auditEntry = auditEntry;
 		this.properties = Collections.unmodifiableMap(properties);
@@ -42,7 +42,7 @@ public class PeltasDataHolder {
 		return auditEntry;
 	}
 
-	public Map<String, PeltasExpresionProperty> getProperties() {
+	public Map<String, PeltasExpressionProperty> getProperties() {
 		return properties;
 	}
 
