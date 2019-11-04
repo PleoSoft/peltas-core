@@ -213,15 +213,16 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Peltas
 		AlfrescoNodeMetadataList body = responseMetadata.getBody();
 		List<AlfrescoNodeMetadata> nodesMetadata = body.getNodes();
 		nodesMetadata.addAll(deletedNodesMetadata);
-		List<PeltasEntry> metadataList = new ArrayList<>(nodesMetadata.size());
+
 		if (nodesMetadata.size() == 0) {
 			return Collections.emptyList();
-		} else {
-			for (AlfrescoNodeMetadata metadata : nodesMetadata) {
-				AlfrescoNode livedataNode = nodesMap.get(metadata.getId()).remove(0);
-				PeltasEntry auditEntry = convertToAudit(metadata, livedataNode);
-				metadataList.add(auditEntry);
-			}
+		}
+
+		List<PeltasEntry> metadataList = new ArrayList<>(nodesMetadata.size());
+		for (AlfrescoNodeMetadata metadata : nodesMetadata) {
+			AlfrescoNode livedataNode = nodesMap.get(metadata.getId()).remove(0);
+			PeltasEntry auditEntry = convertToAudit(metadata, livedataNode);
+			metadataList.add(auditEntry);
 		}
 
 		LOGGER.trace("retreiveCollection() repository data received {}", metadataList);
