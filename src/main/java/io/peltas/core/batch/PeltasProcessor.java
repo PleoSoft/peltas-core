@@ -80,7 +80,7 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 
 	@Override
 	public void onBeforeChunk(ChunkContext context) {
-		PeltasTimestamp timestamp = auditRepository.readTx(applicationName);
+		PeltasTimestamp timestamp = auditRepository.readTx(getCurrentApplicationName());
 		if (timestamp != null) {
 			String[] auditIdSplitted = timestamp.getRef().split(ID_SEPARATOR);
 			Integer nodesCount = nodesCountToInteger(auditIdSplitted[1]);
@@ -101,7 +101,7 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 		PeltasTimestamp timestamp = (PeltasTimestamp) currentChunkContext.getAttribute("peltasTimestamp");
 		if (timestamp == null) {
 			String newRef = "1" + ID_SEPARATOR + nodesCountToString(0);
-			timestamp = new PeltasTimestamp(applicationName, newRef, new Date());
+			timestamp = new PeltasTimestamp(getCurrentApplicationName(), newRef, new Date());
 		}
 
 		String[] auditIdSplitted = timestamp.getRef().split(ID_SEPARATOR);
@@ -126,4 +126,7 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 		return Integer.valueOf(nodesCount);
 	}
 
+	public String getCurrentApplicationName() {
+		return applicationName;
+	}
 }

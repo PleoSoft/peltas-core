@@ -16,6 +16,7 @@
 
 package io.peltas.core.alfresco.workspace;
 
+import org.springframework.batch.item.ItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.support.BasicAuthorizationInterceptor;
@@ -29,7 +30,6 @@ import io.peltas.core.alfresco.PeltasEntry;
 import io.peltas.core.alfresco.config.AbstractAlfrescoPeltasConfiguration;
 import io.peltas.core.alfresco.config.PeltasProperties;
 import io.peltas.core.alfresco.config.PeltasProperties.Authentication.BasicAuth;
-import io.peltas.core.batch.AbstractPeltasRestReader;
 
 @Configuration
 public class DefaultAlfrescoPeltasConfiguration extends AbstractAlfrescoPeltasConfiguration {
@@ -46,11 +46,11 @@ public class DefaultAlfrescoPeltasConfiguration extends AbstractAlfrescoPeltasCo
 	}
 
 	@Override
-	public AbstractPeltasRestReader<PeltasEntry, AlfrescoWorkspaceNodes> reader() {
+	public ItemReader<PeltasEntry> reader() {
 		RestTemplate restTemplate = restTemplate();
 
 		PeltasProperties properties = alfrescoAuditProperties();
-		return new AlfrescoWorkspaceRestReader(restTemplate, properties, dataRepository);
+		return new AlfrescoWorkspaceRestReader(restTemplate, properties, dataRepository, properties.getApplication());
 	}
 
 	private MappingJackson2HttpMessageConverter mappingJacksonHttpMessageConverter() {

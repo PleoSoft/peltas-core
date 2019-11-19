@@ -24,8 +24,6 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.core.GenericMessagingTemplate;
 import org.springframework.messaging.support.MessageBuilder;
 
-import io.peltas.core.batch.MessageContext.MessageContextHolder;
-
 public abstract class PeltasItemProcessor<I, O> extends PeltasListener<I, O> implements ItemProcessor<I, O> {
 	private final GenericMessagingTemplate template;
 
@@ -46,26 +44,14 @@ public abstract class PeltasItemProcessor<I, O> extends PeltasListener<I, O> imp
 		doWithMessage(messageBuilder);
 		Message<I> message = messageBuilder.build();
 
-		@SuppressWarnings("unused")
-		Class<I> clazzI = (Class<I>) item.getClass();
-		MessageContext<Object> messageContext = new MessageContext<>(this.currentChunkContext);
-		messageContext.setItem(auditStackId);
-		messageContext.setMessage((Message<Object>) message);
-		MessageContextHolder.addMessageContext(messageContext);
-
 		Message<O> ret = (Message<O>) template.sendAndReceive("peltas.entry", message);
-		@SuppressWarnings("unused")
-		Class<O> clazzO = (Class<O>) ret.getPayload().getClass();
 
-		MessageContextHolder.removeMessageContext(messageContext);
 		O payload = ret.getPayload();
 		if (shouldSkipPayload(payload)) {
 			onItemSkipped(item, payload);
 			return null;
 		}
 
-		messageContext.setItem(ret.getPayload());
-		MessageContextHolder.addMessageContext(messageContext);
 		onItemProcessed(item, payload);
 		return payload;
 	}

@@ -17,6 +17,7 @@
 package io.peltas.core.batch;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import io.peltas.core.alfresco.PeltasEntry;
@@ -29,6 +30,7 @@ public class PeltasDataHolder {
 	private final Map<String, PeltasExpressionProperty> properties;
 	private final Map<String, Object> builder;
 	private final PeltasHandlerProperties config;
+	private final Map<String, Object> additionalData = new HashMap<>();
 
 	public PeltasDataHolder(PeltasEntry auditEntry, Map<String, PeltasExpressionProperty> properties,
 			Map<String, Object> builder, PeltasHandlerProperties config) {
@@ -52,5 +54,9 @@ public class PeltasDataHolder {
 
 	public PeltasHandlerProperties getConfig() {
 		return config;
+	}
+
+	public Map<String, Object> getAdditionalData() {
+		return additionalData;
 	}
 }

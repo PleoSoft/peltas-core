@@ -30,6 +30,8 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.StringUtils;
 
 import io.peltas.core.alfresco.PeltasEntry;
@@ -56,7 +58,7 @@ public class PeltasHandler {
 	}
 
 	@ServiceActivator(inputChannel = "peltasprocessing")
-	public PeltasDataHolder handle(Message<PeltasEntry> message) {
+	public Message<PeltasDataHolder> handle(Message<PeltasEntry> message) {
 		final PeltasEntry auditEntry = message.getPayload();
 		LOGGER.debug("handle() processing {}", auditEntry);
 
@@ -71,7 +73,11 @@ public class PeltasHandler {
 			processProperties(auditEntry, configuredProperties, mappedProperties);
 
 			LOGGER.trace("handle() properties configured {} -  mapped {}", configuredProperties, mappedProperties);
-			return new PeltasDataHolder(auditEntry, configuredProperties, mappedProperties, config);
+			
+			PeltasDataHolder payload = new PeltasDataHolder(auditEntry, configuredProperties, mappedProperties, config);
+			MessageBuilder<PeltasDataHolder> messageBuilder = MessageBuilder.withPayload(payload);			
+			messageBuilder.copyHeadersIfAbsent(message.getHeaders());			
+			return messageBuilder.build();
 		} catch (final Throwable e) {
 			throw new PeltasConversionException(e);
 		}

@@ -70,15 +70,15 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Peltas
 	private Long currentMaxTxId;
 
 	public AlfrescoWorkspaceRestReader(final RestTemplate restTemplate, final PeltasProperties properties,
-			TxDataRepository auditRepository) {
-		super(properties.getApplication(), restTemplate);
+			TxDataRepository auditRepository, String applicationName) {
+		super(applicationName, restTemplate);
 		this.auditProperties = properties;
 		this.auditRepository = auditRepository;
 	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		auditTimeStamp = auditRepository.readTx(getApplicationName());
+		auditTimeStamp = auditRepository.readTx(getCurrentApplicationName());
 		if (auditTimeStamp != null) {
 			String ref = auditTimeStamp.getRef();
 			String[] split = ref.split(AUDIT_ID_SEPARATOR);
@@ -99,12 +99,17 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Peltas
 	}
 
 	@Override
-	protected void onOpen() {
+	public void onOpen() {
 		currentMaxTxId = getCurrentMaxTxnId();
 		lastFromTxId = fromTxId.longValue();
 		// setCurrentItemCount(0);
 		// setMaxItemCount(lastCount > 0 ? lastCount : 1);
 		super.onOpen();
+	}
+	
+	@Override
+	public void onClose() {
+		super.onClose();
 	}
 
 	@Override
@@ -253,7 +258,7 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Peltas
 		PeltasEntry auditEntry = new PeltasEntry();
 
 		auditEntry.setId(livedataMetadata.getTxnId() + ";" + livedataMetadata.getId());
-		auditEntry.setApplication(getApplicationName());
+		auditEntry.setApplication(getCurrentApplicationName());
 
 		Map<String, Object> liveProperties = livedataMetadata.getProperties();
 
@@ -349,4 +354,5 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Peltas
 		return txnMetadata.getMaxTxnId();
 	}
 
+	
 }

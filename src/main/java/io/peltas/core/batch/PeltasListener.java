@@ -32,8 +32,6 @@ import org.springframework.batch.core.annotation.BeforeWrite;
 import org.springframework.batch.core.annotation.OnProcessError;
 import org.springframework.batch.core.scope.context.ChunkContext;
 
-import io.peltas.core.batch.MessageContext.MessageContextHolder;
-
 public class PeltasListener<I, O> {
 	protected ChunkContext currentChunkContext;
 
@@ -48,7 +46,6 @@ public class PeltasListener<I, O> {
 
 	@AfterChunk
 	final public void afterChunk(ChunkContext context) {
-		MessageContextHolder.clear();
 		onAfterChunk(context);
 	}
 
@@ -57,7 +54,6 @@ public class PeltasListener<I, O> {
 
 	@AfterChunkError
 	final public void afterChunkError(ChunkContext context) {
-		MessageContextHolder.clear();
 		onChunkError(context);
 	}
 
@@ -84,7 +80,6 @@ public class PeltasListener<I, O> {
 
 	@OnProcessError
 	final public void onProcessError(I item, Exception e) {
-		MessageContextHolder.removeMessageItem(item);
 		afterProcessError(item, e);
 	}
 

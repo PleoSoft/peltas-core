@@ -34,7 +34,7 @@ public class PeltasItemReader<T> extends AbstractItemCountingItemStreamItemReade
 
 	public PeltasItemReader(String applicationName, List<T> list) {
 		this.applicationName = applicationName;
-		setName(getApplicationName());
+		setName(getCurrentApplicationName());
 		setList(list);
 	}
 
@@ -72,9 +72,13 @@ public class PeltasItemReader<T> extends AbstractItemCountingItemStreamItemReade
 
 	@Override
 	protected void doClose() throws Exception {
+		onClose();
+	}
+	
+	protected void onClose() {
 	}
 
-	public String getApplicationName() {
+	public String getCurrentApplicationName() {
 		return applicationName;
 	}
 }

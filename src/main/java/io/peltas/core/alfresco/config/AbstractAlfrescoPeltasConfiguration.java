@@ -25,13 +25,16 @@ import org.aspectj.lang.annotation.AfterThrowing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.messaging.core.GenericMessagingTemplate;
 import org.springframework.util.StringUtils;
 
@@ -127,7 +130,10 @@ public abstract class AbstractAlfrescoPeltasConfiguration
 	}
 
 	@Bean
-	public PeltasHandler auditProcessorHandler(List<Converter<?, ?>> converters, PeltasFormatUtil peltasFormatUtil) {
+	public PeltasHandler auditProcessorHandler(List<Converter<?, ?>> converters, PeltasFormatUtil peltasFormatUtil,
+			FormatterRegistry formatterRegistry,
+			@Qualifier("integrationConversionService") ConversionService conversionService,
+			@Qualifier("mvcConversionService") ConversionService conversionService2) {
 		return new PeltasHandler(converters, peltasFormatUtil);
 	}
 

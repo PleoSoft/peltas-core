@@ -98,7 +98,7 @@ public class PeltasExecutionsTest {
 				.get("peltas.handler.configuration");
 		BeanUtils.copyProperties(configuration, config);
 
-		return handler.handle(message);
+		return handler.handle(message).getPayload();
 	}
 
 	public void initMock() {

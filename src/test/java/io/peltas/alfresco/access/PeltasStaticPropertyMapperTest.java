@@ -82,7 +82,7 @@ public class PeltasStaticPropertyMapperTest {
 				.get("peltas.handler.configuration");
 		BeanUtils.copyProperties(configuration, config);
 
-		PeltasDataHolder processedPayload = handler.handle(message);
+		PeltasDataHolder processedPayload = handler.handle(message).getPayload();
 
 		assertThat(processedPayload).isNotNull();
 		assertThat(processedPayload.getProperties()).isNotNull();
