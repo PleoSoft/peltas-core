@@ -217,14 +217,6 @@ public class PeltasBatchConfiguration extends BasicBatchConfigurer {
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(MessageSendingOperations.class)
-	public GenericMessagingTemplate messagingTemplate(BeanFactory beanFactory) {
-		GenericMessagingTemplate template = new GenericMessagingTemplate();
-		template.setBeanFactory(beanFactory);
-		return template;
-	}
-
-	@Bean
 	@ConditionalOnMissingBean(RestOperations.class)
 	public RestTemplate restTemplate(PeltasProperties properties) {
 		RestTemplate restTemplate = new RestTemplate();
@@ -257,8 +249,8 @@ public class PeltasBatchConfiguration extends BasicBatchConfigurer {
 
 	@Bean
 	@ConditionalOnMissingBean(PeltasItemProcessor.class)
-	public PeltasItemProcessor processor(PeltasProperties properties, GenericMessagingTemplate messagingTemplate,
-			List<Converter<?, ?>> converters, PeltasFormatUtil peltasFormatUtil, FormatterRegistry formatterRegistry,
+	public PeltasItemProcessor processor(PeltasProperties properties, List<Converter<?, ?>> converters,
+			PeltasFormatUtil peltasFormatUtil, FormatterRegistry formatterRegistry,
 			@Qualifier("integrationConversionService") ConversionService conversionService,
 			@Qualifier("mvcConversionService") ConversionService conversionService2,
 			PeltasHandlerConfigurationProperties handlerProperties, DoNotProcessHandler doNotProcessHandler,
