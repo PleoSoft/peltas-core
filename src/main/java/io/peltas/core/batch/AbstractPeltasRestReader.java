@@ -28,7 +28,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-public abstract class AbstractPeltasRestReader<T, R> extends PeltasItemReader<T> {
+import io.peltas.core.PeltasEntry;
+
+public abstract class AbstractPeltasRestReader<R> extends PeltasItemReader {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPeltasRestReader.class);
 
@@ -40,15 +42,15 @@ public abstract class AbstractPeltasRestReader<T, R> extends PeltasItemReader<T>
 	}
 
 	@Override
-	public T read() throws Exception, UnexpectedInputException, ParseException {
-		T read = super.read();
+	public PeltasEntry read() throws Exception, UnexpectedInputException, ParseException {
+		PeltasEntry read = super.read();
 		if (read == null) {
 			read = doRetryRead();
 		}
 		return read;
 	}
 
-	protected T doRetryRead() throws Exception {
+	protected PeltasEntry doRetryRead() throws Exception {
 		return null;
 	}
 
@@ -56,7 +58,7 @@ public abstract class AbstractPeltasRestReader<T, R> extends PeltasItemReader<T>
 	protected void onOpen() {
 		@SuppressWarnings("unchecked")
 		Class<R> responseClass = (Class<R>) ((ParameterizedType) getClass().getGenericSuperclass())
-				.getActualTypeArguments()[1];
+				.getActualTypeArguments()[0];
 
 		String queryString = getQueryString();
 		HttpMethod httpMethod = getHttpMethod();
@@ -66,11 +68,11 @@ public abstract class AbstractPeltasRestReader<T, R> extends PeltasItemReader<T>
 		R entries = response.getBody();
 		entries = onResponseReceived(entries);
 
-		List<T> collection = retreiveCollection(entries);
+		List<PeltasEntry> collection = retreiveCollection(entries);
 		setList(collection);
 	}
 
-	abstract protected List<T> retreiveCollection(R response);
+	abstract protected List<PeltasEntry> retreiveCollection(R response);
 
 	protected R onResponseReceived(R auditEntries) {
 		return auditEntries;

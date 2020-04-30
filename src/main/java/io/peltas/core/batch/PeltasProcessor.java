@@ -23,16 +23,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.scope.context.ChunkContext;
-import org.springframework.messaging.core.GenericMessagingTemplate;
-import org.springframework.messaging.support.MessageBuilder;
 
-import io.peltas.core.alfresco.PeltasEntry;
-import io.peltas.core.alfresco.config.PeltasHandlerProperties;
-import io.peltas.core.alfresco.integration.DoNotProcessMarker;
+import io.peltas.boot.PeltasHandlerConfigurationProperties;
+import io.peltas.core.PeltasEntry;
+import io.peltas.core.integration.DoNotProcessHandler;
+import io.peltas.core.integration.PeltasEntryHandler;
 import io.peltas.core.repository.TxDataRepository;
-import io.peltas.core.repository.database.PeltasTimestamp;
+import io.peltas.core.repository.jpa.PeltasTimestamp;
 
-public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasDataHolder> {
+public class PeltasProcessor extends PeltasItemProcessor {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PeltasProcessor.class);
 
@@ -42,25 +41,15 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 	private final TxDataRepository auditRepository;
 	private final AtomicInteger counter = new AtomicInteger(0);
 	private PeltasEntry lastAuditEntry;
+	private final PeltasListenerAdapter peltasListenerAdapter;
 
-	public PeltasProcessor(String applicationName, GenericMessagingTemplate template,
-			TxDataRepository auditRepository) {
-		super(template);
+	public PeltasProcessor(String applicationName, TxDataRepository auditRepository, PeltasEntryHandler handler,
+			PeltasHandlerConfigurationProperties handlerProperties, boolean expectionOnNoMatch,
+			DoNotProcessHandler doNotProcessHandler, PeltasListenerAdapter peltasListenerAdapter) {
+		super(handler, handlerProperties, expectionOnNoMatch, doNotProcessHandler, peltasListenerAdapter);
 		this.applicationName = applicationName;
 		this.auditRepository = auditRepository;
-	}
-
-	@Override
-	protected void doWithMessage(MessageBuilder<PeltasEntry> messageBuilder) {
-		messageBuilder.setHeader("peltas.handler.configuration", new PeltasHandlerProperties());
-	}
-
-	@Override
-	protected boolean shouldSkipPayload(PeltasDataHolder item) {
-		if (item instanceof DoNotProcessMarker) {
-			return true;
-		}
-		return false;
+		this.peltasListenerAdapter = peltasListenerAdapter;
 	}
 
 	@Override
@@ -96,7 +85,6 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 
 	}
 
-	@Override
 	protected void onAfterWrite(List<PeltasDataHolder> items, ChunkContext currentChunkContext) {
 		PeltasTimestamp timestamp = (PeltasTimestamp) currentChunkContext.getAttribute("peltasTimestamp");
 		if (timestamp == null) {
@@ -127,6 +115,6 @@ public class PeltasProcessor extends PeltasItemProcessor<PeltasEntry, PeltasData
 	}
 
 	public String getCurrentApplicationName() {
-		return applicationName;
+		return peltasListenerAdapter.applicationNameSuffix(applicationName);
 	}
 }

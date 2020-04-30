@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+io.peltas.boot.DefaultConvertersConfiguration,\
+io.peltas.boot.PeltasBatchConfiguration

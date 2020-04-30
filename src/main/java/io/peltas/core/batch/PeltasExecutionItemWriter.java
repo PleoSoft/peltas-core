@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 
-import io.peltas.core.alfresco.config.PipelineCollection;
+import io.peltas.core.expression.PipelineCollection;
 
 public class PeltasExecutionItemWriter<I, C> implements ItemWriter<PeltasDataHolder> {
 

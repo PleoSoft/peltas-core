@@ -26,8 +26,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import io.peltas.alfresco.config.PeltastTestConfig;
-import io.peltas.core.alfresco.PeltasException;
-import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
+import io.peltas.boot.PeltasHandlerConfigurationProperties;
+import io.peltas.core.PeltasException;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

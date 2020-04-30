@@ -30,8 +30,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
 import io.peltas.alfresco.config.PeltastTestConfig;
-import io.peltas.core.alfresco.PeltasEntry;
-import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
+import io.peltas.boot.PeltasHandlerConfigurationProperties;
+import io.peltas.core.PeltasEntry;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

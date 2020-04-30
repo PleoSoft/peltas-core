@@ -16,7 +16,7 @@
 
 package io.peltas.core.repository;
 
-import io.peltas.core.repository.database.PeltasTimestamp;
+import io.peltas.core.repository.jpa.PeltasTimestamp;
 
 public interface TxDataRepository {
 

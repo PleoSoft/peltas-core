@@ -55,14 +55,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
 import io.peltas.alfresco.config.PeltastTestConfig;
-import io.peltas.core.alfresco.PeltasEntry;
-import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
-import io.peltas.core.alfresco.config.PeltasHandlerProperties;
-import io.peltas.core.alfresco.config.PipelineCollection;
-import io.peltas.core.alfresco.integration.PeltasFormatUtil;
-import io.peltas.core.alfresco.integration.PeltasHandler;
+import io.peltas.boot.PeltasHandlerConfigurationProperties;
+import io.peltas.core.PeltasEntry;
 import io.peltas.core.batch.PeltasDataHolder;
-import io.peltas.core.repository.database.PeltasJdbcWriter;
+import io.peltas.core.expression.PeltasHandlerProperties;
+import io.peltas.core.expression.PipelineCollection;
+import io.peltas.core.integration.PeltasFormatUtil;
+import io.peltas.core.integration.PeltasEntryHandler;
+import io.peltas.core.repository.jdbc.PeltasJdbcWriter;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -88,17 +88,11 @@ public class PeltasExecutionsTest {
 	public PeltasDataHolder getAuditHolderForAuditEntry(PeltasEntry entry) {
 		final String documentcreatedHandler = properties.findFirstBestMatchHandler(entry);
 
-		final PeltasHandler handler = new PeltasHandler(converters, peltasFormatUtil);
+		final PeltasEntryHandler handler = new PeltasEntryHandler(converters, peltasFormatUtil);
 
-		final Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
-				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();
 		final PeltasHandlerProperties configuration = properties.getForHandler(documentcreatedHandler);
 
-		final PeltasHandlerProperties config = (PeltasHandlerProperties) message.getHeaders()
-				.get("peltas.handler.configuration");
-		BeanUtils.copyProperties(configuration, config);
-
-		return handler.handle(message).getPayload();
+		return handler.handle(entry, configuration);
 	}
 
 	public void initMock() {

@@ -18,9 +18,11 @@ package io.peltas.core.batch;
 
 import java.util.List;
 
+import io.peltas.core.PeltasEntry;
+
 public class TestDataResponse {
 	private int count;
-	private List<TestData> data;
+	private List<PeltasEntry> data;
 
 	public int getCount() {
 		return count;
@@ -30,11 +32,11 @@ public class TestDataResponse {
 		this.count = count;
 	}
 
-	public List<TestData> getData() {
+	public List<PeltasEntry> getData() {
 		return data;
 	}
 
-	public void setData(List<TestData> data) {
+	public void setData(List<PeltasEntry> data) {
 		this.data = data;
 	}
 }

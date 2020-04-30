@@ -21,9 +21,11 @@ import java.util.List;
 
 import org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader;
 
-public class PeltasItemReader<T> extends AbstractItemCountingItemStreamItemReader<T> {
+import io.peltas.core.PeltasEntry;
 
-	private final List<T> list = new ArrayList<>();
+public class PeltasItemReader extends AbstractItemCountingItemStreamItemReader<PeltasEntry> {
+
+	private final List<PeltasEntry> list = new ArrayList<>();
 	private final String applicationName;
 
 	protected int lastCount = 0;
@@ -32,7 +34,7 @@ public class PeltasItemReader<T> extends AbstractItemCountingItemStreamItemReade
 		this(applicationName, null);
 	}
 
-	public PeltasItemReader(String applicationName, List<T> list) {
+	public PeltasItemReader(String applicationName, List<PeltasEntry> list) {
 		this.applicationName = applicationName;
 		setName(getCurrentApplicationName());
 		setList(list);
@@ -44,9 +46,9 @@ public class PeltasItemReader<T> extends AbstractItemCountingItemStreamItemReade
 	}
 
 	@Override
-	protected T doRead() throws Exception {
+	protected PeltasEntry doRead() throws Exception {
 		if (!list.isEmpty()) {
-			T entry = list.remove(0);
+			PeltasEntry entry = list.remove(0);
 			onRead(entry);
 			return entry;
 		}
@@ -54,7 +56,7 @@ public class PeltasItemReader<T> extends AbstractItemCountingItemStreamItemReade
 		return null;
 	}
 
-	protected void setList(List<T> list) {
+	protected void setList(List<PeltasEntry> list) {
 		this.list.clear();
 		if (list != null) {
 			this.list.addAll(list);
@@ -64,7 +66,7 @@ public class PeltasItemReader<T> extends AbstractItemCountingItemStreamItemReade
 		setMaxItemCount(lastCount > 0 ? lastCount : 1);
 	}
 
-	protected void onRead(T entry) {
+	protected void onRead(PeltasEntry entry) {
 	}
 
 	protected void onOpen() {

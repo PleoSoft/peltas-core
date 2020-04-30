@@ -37,12 +37,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
 import io.peltas.alfresco.config.PeltastTestConfig;
-import io.peltas.core.alfresco.PeltasEntry;
-import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
-import io.peltas.core.alfresco.config.PeltasHandlerProperties;
-import io.peltas.core.alfresco.integration.PeltasFormatUtil;
-import io.peltas.core.alfresco.integration.PeltasHandler;
+import io.peltas.boot.PeltasHandlerConfigurationProperties;
+import io.peltas.core.PeltasEntry;
 import io.peltas.core.batch.PeltasDataHolder;
+import io.peltas.core.expression.PeltasHandlerProperties;
+import io.peltas.core.integration.PeltasFormatUtil;
+import io.peltas.core.integration.PeltasEntryHandler;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -72,17 +72,11 @@ public class PeltasStaticPropertyMapperTest {
 		String documentcreatedHandler = pipeline.findFirstBestMatchHandler(entry);
 		assertThat(documentcreatedHandler).isEqualTo("documentread");
 
-		PeltasHandler handler = new PeltasHandler(converters, peltasFormatUtil);
+		PeltasEntryHandler handler = new PeltasEntryHandler(converters, peltasFormatUtil);
 
-		Message<PeltasEntry> message = MessageBuilder.withPayload(entry)
-				.setHeader("peltas.handler.configuration", new PeltasHandlerProperties()).build();
 		PeltasHandlerProperties configuration = pipeline.getForHandler(documentcreatedHandler);
 
-		PeltasHandlerProperties config = (PeltasHandlerProperties) message.getHeaders()
-				.get("peltas.handler.configuration");
-		BeanUtils.copyProperties(configuration, config);
-
-		PeltasDataHolder processedPayload = handler.handle(message).getPayload();
+		PeltasDataHolder processedPayload = handler.handle(entry, configuration);
 
 		assertThat(processedPayload).isNotNull();
 		assertThat(processedPayload.getProperties()).isNotNull();

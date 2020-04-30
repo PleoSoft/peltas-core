@@ -20,9 +20,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.peltas.core.alfresco.PeltasEntry;
-import io.peltas.core.alfresco.config.PeltasExpressionProperty;
-import io.peltas.core.alfresco.config.PeltasHandlerProperties;
+import io.peltas.core.PeltasEntry;
+import io.peltas.core.expression.PeltasExpressionProperty;
+import io.peltas.core.expression.PeltasHandlerProperties;
 
 public class PeltasDataHolder {
 
@@ -30,7 +30,7 @@ public class PeltasDataHolder {
 	private final Map<String, PeltasExpressionProperty> properties;
 	private final Map<String, Object> builder;
 	private final PeltasHandlerProperties config;
-	private final Map<String, Object> additionalData = new HashMap<>();
+	private Map<String, Object> additionalData;
 
 	public PeltasDataHolder(PeltasEntry auditEntry, Map<String, PeltasExpressionProperty> properties,
 			Map<String, Object> builder, PeltasHandlerProperties config) {
@@ -56,7 +56,14 @@ public class PeltasDataHolder {
 		return config;
 	}
 
+	public void addAdditionalData(String key, Object value) {
+		if (additionalData == null) {
+			additionalData = new HashMap<>();
+		}
+		additionalData.put(key, value);
+	}
+
 	public Map<String, Object> getAdditionalData() {
-		return additionalData;
+		return additionalData != null ? Collections.unmodifiableMap(additionalData) : Collections.emptyMap();
 	}
 }

@@ -34,6 +34,8 @@ import org.springframework.util.FileCopyUtils;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.client.RestTemplate;
 
+import io.peltas.core.PeltasEntry;
+
 //@TestPropertySource(locations = "classpath:application.properties")
 public class AbstractPeltasRestReaderTest {
 
@@ -42,17 +44,17 @@ public class AbstractPeltasRestReaderTest {
 	// private PeltasTimestampRepository auditRepository =
 	// mock(PeltasTimestampRepository.class);
 
-	private AbstractPeltasRestReader<TestData, TestDataResponse> reader;
+	private AbstractPeltasRestReader<TestDataResponse> reader;
 
 	@BeforeEach
 	public void setup() {
 		final RestTemplate restTemplate = new RestTemplate();
 		mockServer = MockRestServiceServer.createServer(restTemplate);
 
-		reader = new AbstractPeltasRestReader<TestData, TestDataResponse>("test", restTemplate) {
+		reader = new AbstractPeltasRestReader<TestDataResponse>("test", restTemplate) {
 
 			@Override
-			protected List<TestData> retreiveCollection(TestDataResponse response) {
+			protected List<PeltasEntry> retreiveCollection(TestDataResponse response) {
 				return response.getData();
 			}
 
@@ -75,9 +77,9 @@ public class AbstractPeltasRestReaderTest {
 		ExecutionContext executionContext = new ExecutionContext();
 		reader.open(executionContext);
 
-		TestData read = reader.read();
-		assertEquals("a", read.getField1());
-		assertEquals("b", read.getField2());
+		PeltasEntry read = reader.read();
+		assertEquals("a", read.getId());
+		assertEquals("b", read.getApplication());
 		read = reader.read();
 		assertNull(read);
 	}

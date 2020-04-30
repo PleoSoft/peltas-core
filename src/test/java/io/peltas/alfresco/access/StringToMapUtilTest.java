@@ -21,7 +21,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import io.peltas.core.alfresco.StringToMapUtil;
+import io.peltas.core.StringToMapUtil;
 
 public class StringToMapUtilTest {
 

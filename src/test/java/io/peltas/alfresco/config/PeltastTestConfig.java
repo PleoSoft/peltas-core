@@ -21,12 +21,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import io.peltas.core.alfresco.config.PeltasHandlerConfigurationProperties;
-import io.peltas.core.alfresco.config.expression.ContainsExpressionEvaluator;
-import io.peltas.core.alfresco.config.expression.EqualsExpressionEvaluator;
-import io.peltas.core.alfresco.config.expression.EvaluatorExpressionRegistry;
-import io.peltas.core.alfresco.integration.PeltasFormatUtil;
-import io.peltas.core.config.DefaultConvertersConfiguration;
+import io.peltas.boot.DefaultConvertersConfiguration;
+import io.peltas.boot.PeltasHandlerConfigurationProperties;
+import io.peltas.core.expression.ContainsExpressionEvaluator;
+import io.peltas.core.expression.EqualsExpressionEvaluator;
+import io.peltas.core.expression.EvaluatorExpressionRegistry;
+import io.peltas.core.integration.PeltasFormatUtil;
 
 @Configuration
 @EnableConfigurationProperties

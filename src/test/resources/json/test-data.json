@@ -1,4 +1,4 @@
 {
 "count":1,
-"data":[{"field1":"a", "field2":"b"}]
+"data":[{"id":"a", "application":"b"}]
 }
