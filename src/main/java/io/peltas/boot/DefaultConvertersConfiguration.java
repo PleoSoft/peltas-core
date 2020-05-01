@@ -25,8 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,8 +39,6 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.util.StringUtils;
 
-import com.google.common.collect.ImmutableMap;
-
 import io.peltas.core.converter.PrefixStringHashMap;
 import io.peltas.core.integration.PeltasConversionException;
 import io.peltas.core.integration.PeltasFormatUtil;
@@ -48,7 +46,7 @@ import io.peltas.core.integration.PeltasFormatUtil;
 @Configuration
 @EnableConfigurationProperties(AlfrescoModelConfigurationProperties.class)
 public class DefaultConvertersConfiguration {
-	
+
 	@Bean
 	public Converter<?, ?> mapToPrefixedMapConverter(AlfrescoModelConfigurationProperties alfescoModelConfiguration) {
 		return new Converter<Map<String, Object>, PrefixStringHashMap<String, Object>>() {
@@ -138,7 +136,10 @@ public class DefaultConvertersConfiguration {
 				final ArrayList<Map<String, Object>> list = new ArrayList<>();
 				for (final Map.Entry<String, Object> entry : entrySet) {
 					final Object value = entry.getValue() != null ? entry.getValue() : "";
-					list.add(ImmutableMap.of("key", entry.getKey(), "value", value));
+					Map<String, Object> map = new HashMap<>();
+					map.put("key", entry.getKey());
+					map.put("value", value);
+					list.add(map);
 				}
 				return list;
 			}

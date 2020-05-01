@@ -19,6 +19,7 @@ package io.peltas.core.repository.jdbc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -33,10 +34,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
+import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.StringUtils;
-
-import com.google.common.collect.ImmutableMap;
 
 import io.peltas.core.PeltasEntry;
 import io.peltas.core.batch.PeltasDataHolder;
@@ -87,6 +87,8 @@ public class PeltasJdbcWriter extends PeltasExecutionItemWriter<MapSqlParameterS
 	@Override
 	public void itemExecution(String executionKey, MapSqlParameterSource parameters, PeltasDataHolder item) {
 		String sql = mappedExecutionsConfigResources.get(executionKey);
+		Assert.hasText(sql, "Execution file must be setup for " + executionKey);
+
 		Map<String, Object> sqlResult = namedParameterJdbcTemplate.queryForMap(sql, parameters);
 		addSources(executionKey, parameters, sqlResult);
 
@@ -108,7 +110,7 @@ public class PeltasJdbcWriter extends PeltasExecutionItemWriter<MapSqlParameterS
 
 		if (collectionValue instanceof Map) {
 			Message<Map<String, ?>> message = new GenericMessage<Map<String, ?>>(
-					ImmutableMap.of(collectionKey, collectionValue));
+					Collections.singletonMap(collectionKey, collectionValue));
 			ObjectToMapTransformer transformer = new ObjectToMapTransformer();
 			transformer.setShouldFlattenKeys(true);
 			Map<String, ?> payload = (Map<String, ?>) transformer.transform(message).getPayload();
@@ -123,6 +125,8 @@ public class PeltasJdbcWriter extends PeltasExecutionItemWriter<MapSqlParameterS
 	@Override
 	public void collectionExecution(String executionKey, MapSqlParameterSource params, PeltasDataHolder item) {
 		String collectionSql = mappedExecutionsConfigResources.get(executionKey);
+		Assert.hasText(collectionSql, "Execution file must be setup for " + executionKey);
+
 		Map<String, Object> sqlResult = namedParameterJdbcTemplate.queryForMap(collectionSql, params);
 		addSources(executionKey, params, sqlResult);
 		if (LOGGER.isTraceEnabled()) {
@@ -154,8 +158,10 @@ public class PeltasJdbcWriter extends PeltasExecutionItemWriter<MapSqlParameterS
 //				auditEntry.getUser(), "audit.userfull", auditEntry.getUserFullname(), "audit.time",
 //				auditEntry.getTime());
 
-		ImmutableMap<String, ? extends Object> auditMap = ImmutableMap.of("audit.id", auditEntry.getId(), "audit.user",
-				auditEntry.getUser(), "audit.time", auditEntry.getTime());
+		Map<String, Object> auditMap = new HashMap<>();
+		auditMap.put("audit.id", auditEntry.getId());
+		auditMap.put("audit.user", auditEntry.getUser());
+		auditMap.put("audit.time", auditEntry.getTime());
 
 		parameterSourceMap.addValues(builder);
 		parameterSourceMap.addValues(auditMap);

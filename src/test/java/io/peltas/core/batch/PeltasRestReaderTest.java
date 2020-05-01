@@ -16,8 +16,8 @@
 
 package io.peltas.core.batch;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.FileReader;
 import java.util.List;
@@ -36,13 +36,9 @@ import org.springframework.web.client.RestTemplate;
 
 import io.peltas.core.PeltasEntry;
 
-//@TestPropertySource(locations = "classpath:application.properties")
-public class AbstractPeltasRestReaderTest {
+public class PeltasRestReaderTest {
 
 	private MockRestServiceServer mockServer;
-
-	// private PeltasTimestampRepository auditRepository =
-	// mock(PeltasTimestampRepository.class);
 
 	private AbstractPeltasRestReader<TestDataResponse> reader;
 

@@ -29,14 +29,15 @@ public class ContainsPrefixStringExpressionEvaluator extends AbstractEvalatorExp
 
 	@Override
 	public boolean isValueMapped(String evaluatorKey, String evaluatorValue, PeltasEntry auditEntry) {
-		List<Object> mappedMultiValueProperty = PeltasEntryHandler.getMappedMultiValueProperty(evaluatorKey, auditEntry);
+		List<Object> mappedMultiValueProperty = PeltasEntryHandler.getMappedMultiValueProperty(evaluatorKey,
+				auditEntry);
 		for (Object object : mappedMultiValueProperty) {
-			if(object instanceof Map) {
-				Map<?,?> map = (Map<?,?>)object;
-				String prefix = (String)map.get("prefixString");
-				String localName = (String)map.get("localName");
-				
-				if(String.format("%s:%s", prefix, localName).equals(evaluatorValue)) {
+			if (object instanceof Map) {
+				Map<?, ?> map = (Map<?, ?>) object;
+				String prefix = (String) map.get("prefixString");
+				String localName = (String) map.get("localName");
+
+				if (String.format("%s:%s", prefix, localName).equals(evaluatorValue)) {
 					return true;
 				}
 			}

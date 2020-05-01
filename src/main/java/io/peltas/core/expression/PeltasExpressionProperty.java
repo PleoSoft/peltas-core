@@ -48,17 +48,18 @@ public class PeltasExpressionProperty {
 	public void setType(Class<?> type) {
 		this.type = type;
 	}
-	
+
 	public List<String> getFormatKeys() {
 		return formatKeys;
 	}
-	
+
 	public void setFormatKeys(List<String> formatKeys) {
 		this.formatKeys = formatKeys;
 	}
-	
+
 	@Override
 	public String toString() {
-		return "PeltasExpresionProperty [format=" + format + ", data=" + data + ", type=" + type + ", formatKeys="+formatKeys+"]";
+		return "PeltasExpresionProperty [format=" + format + ", data=" + data + ", type=" + type + ", formatKeys="
+				+ formatKeys + "]";
 	}
 }

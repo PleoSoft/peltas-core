@@ -76,7 +76,7 @@ public class PeltasItemReader extends AbstractItemCountingItemStreamItemReader<P
 	protected void doClose() throws Exception {
 		onClose();
 	}
-	
+
 	protected void onClose() {
 	}
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.peltas.alfresco.access;
+package io.peltas.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,12 +23,9 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -36,26 +33,24 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
-import io.peltas.alfresco.config.PeltastTestConfig;
 import io.peltas.boot.PeltasHandlerConfigurationProperties;
-import io.peltas.core.PeltasEntry;
 import io.peltas.core.batch.PeltasDataHolder;
 import io.peltas.core.expression.PeltasHandlerProperties;
-import io.peltas.core.integration.PeltasFormatUtil;
 import io.peltas.core.integration.PeltasEntryHandler;
+import io.peltas.core.integration.PeltasFormatUtil;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @TestPropertySource(locations = "classpath:peltas-static-propety-mapper-test.properties")
-@ContextConfiguration(classes = PeltastTestConfig.class)
-public class PeltasStaticPropertyMapperTest {
+@ContextConfiguration(classes = PeltasTestConfiguration.class)
+public class StaticPropertyMapperTest {
 
 	@Autowired
 	PeltasHandlerConfigurationProperties pipeline;
-	
+
 	@Autowired
-	List<Converter<?,?>> converters;
-	
+	List<Converter<?, ?>> converters;
+
 	@Autowired
 	PeltasFormatUtil peltasFormatUtil;
 

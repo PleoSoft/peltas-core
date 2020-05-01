@@ -73,7 +73,6 @@ public class PeltasHandlerConfigurationProperties {
 		evaluatorsMap.put(key, evaluator);
 	}
 
-	
 	// TODO refactor: this method does not belong inhere
 	public String findFirstBestMatchHandler(PeltasEntry auditEntry) {
 		Set<Entry<String, String>> entrySet = evaluatorsMap.entrySet();
@@ -142,7 +141,7 @@ public class PeltasHandlerConfigurationProperties {
 
 	public PeltasHandlerProperties getForHandler(String handler) {
 		PeltasHandlerProperties props = handlerConfigurationMap.get(handler);
-		if(props != null && props.getHandlerName() == null) {
+		if (props != null && props.getHandlerName() == null) {
 			props.setHandlerName(handler);
 		}
 		return props;

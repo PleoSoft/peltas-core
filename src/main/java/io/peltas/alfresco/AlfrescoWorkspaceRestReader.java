@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -40,9 +41,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
 
 import io.peltas.boot.PeltasProperties;
 import io.peltas.core.PeltasEntry;
@@ -107,7 +105,7 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 		// setMaxItemCount(lastCount > 0 ? lastCount : 1);
 		super.onOpen();
 	}
-	
+
 	@Override
 	public void onClose() {
 		super.onClose();
@@ -144,8 +142,9 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 	@AfterChunk
 	public void afterChunk(ChunkContext context) {
 		auditTimeStamp = (PeltasTimestamp) context.getAttribute("peltasTimestamp");
-		if(auditTimeStamp == null) {
-			// before chunk was not executed, it is highly probably that the alfresco server was down
+		if (auditTimeStamp == null) {
+			// before chunk was not executed, it is highly probably that the alfresco server
+			// was down
 			return;
 		}
 
@@ -209,11 +208,15 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 			return Collections.emptyList();
 		}
 
-		ImmutableMap<Object, Object> map = ImmutableMap.builder().put("nodeIds", nodesId)
-				.put("includeProperties", "true").put("includeParentAssociations", "false")
-				.put("includeChildIds", "false").put("includeChildAssocs", "false").put("includeAclId", "false")
-				.put("includePaths", "false").put("includeAspects", "true")
-				/* .put("maxResults", nodesId.size()) */.build();
+		Map<Object, Object> map = new HashMap<>();
+		map.put("nodeIds", nodesId);
+		map.put("includeProperties", "true");
+		map.put("includeParentAssociations", "false");
+		map.put("includeChildIds", "false");
+		map.put("includeChildAssocs", "false");
+		map.put("includeAclId", "false");
+		map.put("includePaths", "false");
+		map.put("includeAspects", "true");
 
 		String url = auditProperties.getHost() + "/" + auditProperties.getServiceUrl() + "/metadata";
 
@@ -272,42 +275,45 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 			for (String aspect : livedataMetadata.getAspects()) {
 				String prefix = aspect;
 				String[] split = prefix.split(":", 2);
-				aspects.add(ImmutableMap.of("prefixString", split[0], "localName", split[1]));
+				Map<String, String> map = new HashMap<>();
+				map.put("prefixString", split[0]);
+				map.put("localName", split[1]);
+				aspects.add(map);
 			}
 		}
 
 		String status = livedataNode.getStatus();
 		String actionStatus = status != null ? status.equals("d") ? "DELETED" : "UPDATED" : "UNKNOWN";
 
-		Builder<String, Object> builder = ImmutableMap.<String, Object>builder();
+		Map<String, Object> map = new HashMap<>();
 		if (liveProperties != null) {
-			builder.put("/alfresco-workspace/transaction/properties/add", liveProperties);
+			map.put("/alfresco-workspace/transaction/properties/add", liveProperties);
 		}
 
 		if (aspects != null) {
-			builder.put("/alfresco-workspace/transaction/aspects/add", aspects);
+			map.put("/alfresco-workspace/transaction/aspects/add", aspects);
 		}
 
 		if (livedataMetadata.getType() != null) {
-			builder.put("/alfresco-workspace/transaction/type", livedataMetadata.getType());
+			map.put("/alfresco-workspace/transaction/type", livedataMetadata.getType());
 		}
 
 		if (actionStatus != null) {
-			builder.put("/alfresco-workspace/transaction/action", "NODE-" + actionStatus);
+			map.put("/alfresco-workspace/transaction/action", "NODE-" + actionStatus);
 		}
 
 		if (livedataMetadata.getNodeRef() != null) {
-			builder.put("/alfresco-workspace/transaction/path", livedataMetadata.getNodeRef());
-			builder.put("/alfresco-workspace/transaction/nodeRef", livedataMetadata.getNodeRef());
+			map.put("/alfresco-workspace/transaction/path", livedataMetadata.getNodeRef());
+			map.put("/alfresco-workspace/transaction/nodeRef", livedataMetadata.getNodeRef());
 
 			int lastIndexOf = livedataMetadata.getNodeRef().lastIndexOf("/");
 			if (lastIndexOf != -1) {
 				String nodeId = livedataMetadata.getNodeRef().substring(lastIndexOf + 1);
-				builder.put("/alfresco-workspace/transaction/nodeId", nodeId);
+				map.put("/alfresco-workspace/transaction/nodeId", nodeId);
 			}
 		}
 
-		auditEntry.setValues(builder.build());
+		auditEntry.setValues(map);
 
 		// get cm:creator & created
 		auditEntry.setUser("UNKNOWN");
@@ -322,8 +328,10 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 
 	@Override
 	protected HttpEntity<?> getHttpEntity() {
-
-		return new HttpEntity<>(ImmutableMap.of("fromTxnId", fromTxId, "toTxnId", toTxId));
+		Map<String, Object> map = new HashMap<>();
+		map.put("fromTxnId", fromTxId);
+		map.put("toTxnId", toTxId);
+		return new HttpEntity<>(map);
 	}
 
 	@Override
@@ -363,5 +371,4 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 		}
 	}
 
-	
 }

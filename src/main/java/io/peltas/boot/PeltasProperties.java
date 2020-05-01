@@ -33,7 +33,7 @@ public class PeltasProperties {
 	private String application = "alfresco-access";
 	private String noMatchHandler = "donotprocess";
 	private String timestamp = "database";
-	private Integer chunksize = 1; 
+	private Integer chunksize = 1;
 
 	private AuthenticationType authenticationtype = AuthenticationType.basicauth;
 
@@ -104,19 +104,19 @@ public class PeltasProperties {
 	public void setAuth(Authentication auth) {
 		this.auth = auth;
 	}
-	
+
 	public String getTimestamp() {
 		return timestamp;
 	}
-	
+
 	public void setTimestamp(String timestamp) {
 		this.timestamp = timestamp;
 	}
-	
+
 	public Integer getChunksize() {
 		return chunksize;
 	}
-	
+
 	public void setChunksize(Integer chunksize) {
 		this.chunksize = chunksize;
 	}

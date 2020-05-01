@@ -54,7 +54,7 @@ public class PeltasListenerAdapter {
 
 	protected void onAfterStep(StepExecution stepExecution) {
 	}
-	
+
 	public String applicationNameSuffix(String applicationName) {
 		return applicationName;
 	}

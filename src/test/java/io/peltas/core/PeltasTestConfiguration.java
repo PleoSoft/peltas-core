@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.peltas.alfresco.config;
+package io.peltas.core;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -31,7 +31,7 @@ import io.peltas.core.integration.PeltasFormatUtil;
 @Configuration
 @EnableConfigurationProperties
 @Import(DefaultConvertersConfiguration.class)
-public class PeltastTestConfig {
+public class PeltasTestConfiguration {
 
 	@Bean
 	public EvaluatorExpressionRegistry evaluatorExpressionRegistry() {

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package io.peltas.alfresco.access;
+package io.peltas.core;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doAnswer;
 
 import java.sql.Timestamp;
@@ -35,7 +35,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -43,8 +42,6 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -53,21 +50,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
-import io.peltas.alfresco.config.PeltastTestConfig;
 import io.peltas.boot.PeltasHandlerConfigurationProperties;
-import io.peltas.core.PeltasEntry;
 import io.peltas.core.batch.PeltasDataHolder;
 import io.peltas.core.expression.PeltasHandlerProperties;
 import io.peltas.core.expression.PipelineCollection;
-import io.peltas.core.integration.PeltasFormatUtil;
 import io.peltas.core.integration.PeltasEntryHandler;
+import io.peltas.core.integration.PeltasFormatUtil;
 import io.peltas.core.repository.jdbc.PeltasJdbcWriter;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @TestPropertySource(locations = "classpath:peltas-executions-collection.properties")
-@ContextConfiguration(classes = PeltastTestConfig.class)
-public class PeltasExecutionsCollectionsTest {
+@ContextConfiguration(classes = PeltasTestConfiguration.class)
+public class ExecutionsCollectionsTest {
 
 	@Autowired
 	PeltasHandlerConfigurationProperties properties;
@@ -75,7 +70,7 @@ public class PeltasExecutionsCollectionsTest {
 	@Mock
 	NamedParameterJdbcTemplate jdbcTemplate;
 
-	@Value("classpath:io/peltas/executions/**.sql")
+	@Value("classpath:io/peltas/db/executions/**.sql")
 	Resource[] resources;
 
 	@Autowired
@@ -116,14 +111,12 @@ public class PeltasExecutionsCollectionsTest {
 		entry.setApplication("test");
 
 		final Builder<String, Object> documentcreatedValues = ImmutableMap.<String, Object>builder();
-		documentcreatedValues
-				.put("/alfresco-access/transaction/properties/add",
-						ImmutableMap.of("{http://www.alfresco.org/model/content/1.0}description", ImmutableMap.of("en", "description"),
-								"{http://www.alfresco.org/model/content/1.0}created", "Thu Jun 14 13:44:58 UTC 2018",
-								"{http://www.alfresco.org/model/system/1.0}store-protocol", "workspace",
-								"{http://www.alfresco.org/model/system/1.0}store-identifier", "SpacesStore",
-								"{http://www.alfresco.org/model/system/1.0}node-uuid",
-								"09ea11d8-810c-4e72-a9cc-ee8435af0963"))
+		documentcreatedValues.put("/alfresco-access/transaction/properties/add",
+				ImmutableMap.of("{http://www.alfresco.org/model/content/1.0}description",
+						ImmutableMap.of("en", "description"), "{http://www.alfresco.org/model/content/1.0}created",
+						"Thu Jun 14 13:44:58 UTC 2018", "{http://www.alfresco.org/model/system/1.0}store-protocol",
+						"workspace", "{http://www.alfresco.org/model/system/1.0}store-identifier", "SpacesStore",
+						"{http://www.alfresco.org/model/system/1.0}node-uuid", "09ea11d8-810c-4e72-a9cc-ee8435af0963"))
 				.put("/alfresco-access/transaction/type", "cm:content")
 				.put("/alfresco-access/transaction/action", "CREATE")
 				.put("/alfresco-access/transaction/path", "cm:app/test")
@@ -148,7 +141,7 @@ public class PeltasExecutionsCollectionsTest {
 		assertArrayEquals(Arrays.asList("batch_bi_case_action_aspect", "batch_bi_case_action_aspect2").toArray(),
 				collections.get("aspect").getExecutions().toArray());
 
-		final PeltasJdbcWriter writer = new PeltasJdbcWriter(jdbcTemplate, resources);
-		writer.write(list);
+//		final PeltasJdbcWriter writer = new PeltasJdbcWriter(jdbcTemplate, resources);
+//		writer.write(list);
 	}
 }

@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package io.peltas.alfresco.access;
+package io.peltas.core;
 
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import io.peltas.core.StringToMapUtil;
 
 public class StringToMapUtilTest {
 

@@ -28,7 +28,8 @@ public class ContainsNotExpressionEvaluator extends AbstractEvalatorExpression {
 
 	@Override
 	public boolean isValueMapped(String evaluatorKey, String evaluatorValue, PeltasEntry auditEntry) {
-		List<Object> mappedMultiValueProperty = PeltasEntryHandler.getMappedMultiValueProperty(evaluatorKey, auditEntry);
+		List<Object> mappedMultiValueProperty = PeltasEntryHandler.getMappedMultiValueProperty(evaluatorKey,
+				auditEntry);
 		return !mappedMultiValueProperty.contains(evaluatorValue);
 	}
 }

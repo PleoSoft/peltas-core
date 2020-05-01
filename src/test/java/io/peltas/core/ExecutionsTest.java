@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package io.peltas.alfresco.access;
+package io.peltas.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.doAnswer;
 
 import java.sql.Timestamp;
@@ -36,7 +36,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -44,8 +43,6 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -54,21 +51,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
-import io.peltas.alfresco.config.PeltastTestConfig;
 import io.peltas.boot.PeltasHandlerConfigurationProperties;
-import io.peltas.core.PeltasEntry;
 import io.peltas.core.batch.PeltasDataHolder;
 import io.peltas.core.expression.PeltasHandlerProperties;
 import io.peltas.core.expression.PipelineCollection;
-import io.peltas.core.integration.PeltasFormatUtil;
 import io.peltas.core.integration.PeltasEntryHandler;
+import io.peltas.core.integration.PeltasFormatUtil;
 import io.peltas.core.repository.jdbc.PeltasJdbcWriter;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @TestPropertySource(locations = "classpath:peltas-executions-test.properties")
-@ContextConfiguration(classes = PeltastTestConfig.class)
-public class PeltasExecutionsTest {
+@ContextConfiguration(classes = PeltasTestConfiguration.class)
+public class ExecutionsTest {
 
 	@Autowired
 	PeltasHandlerConfigurationProperties properties;
@@ -76,7 +71,7 @@ public class PeltasExecutionsTest {
 	@Mock
 	NamedParameterJdbcTemplate jdbcTemplate;
 
-	@Value("classpath:io/peltas/executions/**.sql")
+	@Value("classpath:io/peltas/db/executions/**.sql")
 	Resource[] resources;
 
 	@Autowired
@@ -141,11 +136,14 @@ public class PeltasExecutionsTest {
 		List<String> executions = processedPayload.getConfig().getPipeline().getExecutions();
 		assertArrayEquals(Arrays.asList("batch_bi_case", "batch_bi_case_action").toArray(), executions.toArray());
 
-		final PeltasJdbcWriter writer = new PeltasJdbcWriter(jdbcTemplate, resources);
+		final MapSqlParameterSource createSqlParameterSource = PeltasJdbcWriter
+				.createSqlParameterSource(processedPayload);
+		assertNull(createSqlParameterSource.getValue("audit.id"));
 
-		Assertions.assertThrows(NullPointerException.class, () -> {
-			writer.write(list);
-		});
+//		final PeltasJdbcWriter writer = new PeltasJdbcWriter(jdbcTemplate, resources);
+//		Assertions.assertThrows(NullPointerException.class, () -> {
+//			writer.write(list);
+//		});
 	}
 
 	@Test
@@ -233,8 +231,8 @@ public class PeltasExecutionsTest {
 		List<String> aspectExecutions = collections.get("aspect").getExecutions();
 		assertArrayEquals(Arrays.asList("batch_bi_case_action_aspect").toArray(), aspectExecutions.toArray());
 
-		final PeltasJdbcWriter writer = new PeltasJdbcWriter(jdbcTemplate, resources);
-		writer.write(list);
+//		final PeltasJdbcWriter writer = new PeltasJdbcWriter(jdbcTemplate, resources);
+//		writer.write(list);
 	}
 
 	@Test
@@ -272,8 +270,8 @@ public class PeltasExecutionsTest {
 		assertThat(executions.size()).isEqualTo(1);
 		assertArrayEquals(Arrays.asList("batch_bi_case").toArray(), executions.toArray());
 
-		final PeltasJdbcWriter writer = new PeltasJdbcWriter(jdbcTemplate, resources);
-		writer.write(list);
+//		final PeltasJdbcWriter writer = new PeltasJdbcWriter(jdbcTemplate, resources);
+//		writer.write(list);
 	}
 
 }

@@ -41,7 +41,7 @@ public class PeltasHandlerProperties {
 	}
 
 	public Pipeline getPipeline() {
-		if(pipeline == null && handlerName != null) {
+		if (pipeline == null && handlerName != null) {
 			Pipeline handlerOnlyPipeline = new Pipeline();
 			handlerOnlyPipeline.setExecutions(Collections.singletonList(handlerName));
 			return handlerOnlyPipeline;
@@ -52,11 +52,11 @@ public class PeltasHandlerProperties {
 	public void setPipeline(Pipeline pipeline) {
 		this.pipeline = pipeline;
 	}
-	
+
 	public String getHandlerName() {
 		return handlerName;
 	}
-	
+
 	public void setHandlerName(String handlerName) {
 		this.handlerName = handlerName;
 	}

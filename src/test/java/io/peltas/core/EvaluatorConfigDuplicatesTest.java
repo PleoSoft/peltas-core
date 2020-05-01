@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.peltas.alfresco.access;
+package io.peltas.core;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -25,14 +25,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.peltas.alfresco.config.PeltastTestConfig;
 import io.peltas.boot.PeltasHandlerConfigurationProperties;
-import io.peltas.core.PeltasException;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @TestPropertySource(locations = "classpath:peltas-evaluator-config-duplicates-test.properties")
-@ContextConfiguration(classes = PeltastTestConfig.class)
+@ContextConfiguration(classes = PeltasTestConfiguration.class)
 public class EvaluatorConfigDuplicatesTest {
 
 	@Autowired

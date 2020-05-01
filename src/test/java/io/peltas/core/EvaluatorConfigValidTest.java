@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package io.peltas.alfresco.access;
+package io.peltas.core;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
@@ -29,13 +29,12 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.MultiValueMap;
 
-import io.peltas.alfresco.config.PeltastTestConfig;
 import io.peltas.boot.PeltasHandlerConfigurationProperties;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @TestPropertySource(locations = "classpath:peltas-evaluator-config-valid-test.properties")
-@ContextConfiguration(classes = PeltastTestConfig.class)
+@ContextConfiguration(classes = PeltasTestConfiguration.class)
 public class EvaluatorConfigValidTest {
 
 	@Autowired

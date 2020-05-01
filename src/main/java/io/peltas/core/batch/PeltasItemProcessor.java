@@ -42,8 +42,7 @@ import io.peltas.core.expression.PeltasHandlerProperties;
 import io.peltas.core.integration.DoNotProcessHandler;
 import io.peltas.core.integration.PeltasEntryHandler;
 
-public abstract class PeltasItemProcessor 
-		implements ItemProcessor<PeltasEntry, PeltasDataHolder> {
+public abstract class PeltasItemProcessor implements ItemProcessor<PeltasEntry, PeltasDataHolder> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PeltasItemProcessor.class);
 
@@ -52,11 +51,12 @@ public abstract class PeltasItemProcessor
 	private final boolean expectionOnNoMatch;
 	private final DoNotProcessHandler doNotProcessHandler;
 	private final PeltasListenerAdapter peltasListenerAdapter;
-	
+
 	protected ChunkContext currentChunkContext;
 
 	public PeltasItemProcessor(PeltasEntryHandler handler, PeltasHandlerConfigurationProperties handlerProperties,
-			boolean expectionOnNoMatch, DoNotProcessHandler doNotProcessHandler, PeltasListenerAdapter peltasListenerAdapter) {
+			boolean expectionOnNoMatch, DoNotProcessHandler doNotProcessHandler,
+			PeltasListenerAdapter peltasListenerAdapter) {
 		this.handlerProperties = handlerProperties;
 		this.expectionOnNoMatch = expectionOnNoMatch;
 		this.handler = handler;
@@ -111,14 +111,14 @@ public abstract class PeltasItemProcessor
 	protected boolean shouldSkipPayload(PeltasDataHolder item) {
 		return false;
 	}
-	
+
 	@BeforeChunk
 	final public void beforeChunk(ChunkContext context) {
 		currentChunkContext = context;
 		onBeforeChunk(context);
 		peltasListenerAdapter.onBeforeChunk(currentChunkContext);
 	}
-	
+
 	protected void onBeforeChunk(ChunkContext context) {
 	}
 
@@ -127,7 +127,7 @@ public abstract class PeltasItemProcessor
 		onAfterChunk(context);
 		peltasListenerAdapter.onAfterChunk(context);
 	}
-	
+
 	protected void onAfterChunk(ChunkContext context) {
 	}
 
@@ -136,7 +136,7 @@ public abstract class PeltasItemProcessor
 		onChunkError(context);
 		peltasListenerAdapter.onChunkError(context);
 	}
-	
+
 	protected void onChunkError(ChunkContext context) {
 	}
 
@@ -147,7 +147,7 @@ public abstract class PeltasItemProcessor
 			peltasListenerAdapter.onAfterProcess(item, result);
 		}
 	}
-	
+
 	protected void onAfterProcess(PeltasEntry item, PeltasDataHolder result) {
 	}
 
@@ -156,7 +156,7 @@ public abstract class PeltasItemProcessor
 		onBeforeProcess(item);
 		peltasListenerAdapter.onBeforeProcess(item);
 	}
-	
+
 	protected void onBeforeProcess(PeltasEntry item) {
 	}
 
@@ -165,7 +165,7 @@ public abstract class PeltasItemProcessor
 		afterProcessError(item, e);
 		peltasListenerAdapter.afterProcessError(item, e);
 	}
-	
+
 	protected void afterProcessError(PeltasEntry item, Exception e) {
 	}
 
@@ -175,7 +175,6 @@ public abstract class PeltasItemProcessor
 		peltasListenerAdapter.onAfterWrite(items, currentChunkContext);
 	}
 
-	
 	protected void onAfterWrite(List<PeltasDataHolder> items, ChunkContext currentChunkContext2) {
 	}
 
@@ -184,7 +183,7 @@ public abstract class PeltasItemProcessor
 		onBeforeWrite(items);
 		peltasListenerAdapter.onBeforeWrite(items);
 	}
-	
+
 	protected void onBeforeWrite(List<PeltasDataHolder> items) {
 	}
 
@@ -193,7 +192,7 @@ public abstract class PeltasItemProcessor
 		onBeforeStep(stepExecution);
 		peltasListenerAdapter.onBeforeStep(stepExecution);
 	}
-	
+
 	protected void onBeforeStep(StepExecution stepExecution) {
 	}
 

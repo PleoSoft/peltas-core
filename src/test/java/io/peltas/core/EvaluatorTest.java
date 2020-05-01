@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.peltas.alfresco.access;
+package io.peltas.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,15 +29,13 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
-import io.peltas.alfresco.config.PeltastTestConfig;
 import io.peltas.boot.PeltasHandlerConfigurationProperties;
-import io.peltas.core.PeltasEntry;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @TestPropertySource(locations = "classpath:peltas-test.properties")
-@ContextConfiguration(classes = PeltastTestConfig.class)
-public class PeltasEvaluatorTest {
+@ContextConfiguration(classes = PeltasTestConfiguration.class)
+public class EvaluatorTest {
 
 	@Autowired
 	PeltasHandlerConfigurationProperties pipeline;
