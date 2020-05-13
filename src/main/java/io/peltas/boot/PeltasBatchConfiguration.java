@@ -19,6 +19,7 @@ package io.peltas.boot;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
@@ -44,6 +45,7 @@ import org.springframework.batch.core.repository.support.MapJobRepositoryFactory
 import org.springframework.batch.core.step.builder.SimpleStepBuilder;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
@@ -51,6 +53,9 @@ import org.springframework.boot.autoconfigure.batch.BasicBatchConfigurer;
 import org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration;
 import org.springframework.boot.autoconfigure.batch.BatchProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
+import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizers;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -60,7 +65,8 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.format.FormatterRegistry;
-import org.springframework.http.client.support.BasicAuthorizationInterceptor;
+import org.springframework.http.client.support.BasicAuthenticationInterceptor;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.util.StringUtils;
@@ -72,6 +78,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.peltas.alfresco.AlfrescoWorkspaceRestReader;
 import io.peltas.boot.PeltasProperties.Authentication.BasicAuth;
+import io.peltas.boot.PeltasProperties.Authentication.Header;
 import io.peltas.core.PeltasEntry;
 import io.peltas.core.PeltasException;
 import io.peltas.core.StringToMapUtil;
@@ -85,6 +92,7 @@ import io.peltas.core.expression.ContainsNotPrefixStringExpressionEvaluator;
 import io.peltas.core.expression.ContainsPrefixStringExpressionEvaluator;
 import io.peltas.core.expression.EqualsExpressionEvaluator;
 import io.peltas.core.expression.EvaluatorExpressionRegistry;
+import io.peltas.core.http.HeaderInterceptor;
 import io.peltas.core.integration.DoNotProcessHandler;
 import io.peltas.core.integration.PeltasEntryHandler;
 import io.peltas.core.integration.PeltasFormatUtil;
@@ -94,7 +102,7 @@ import io.peltas.core.repository.TxDataRepository;
 @Configuration
 @PropertySource(ignoreResourceNotFound = true, value = { "classpath:/io/peltas/peltas-alfresco.properties" })
 @EnableConfigurationProperties({ PeltasProperties.class, PeltasHandlerConfigurationProperties.class })
-@AutoConfigureBefore(BatchAutoConfiguration.class)
+@AutoConfigureBefore({ BatchAutoConfiguration.class, HttpMessageConvertersAutoConfiguration.class })
 public class PeltasBatchConfiguration extends BasicBatchConfigurer {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PeltasBatchConfiguration.class);
@@ -214,21 +222,49 @@ public class PeltasBatchConfiguration extends BasicBatchConfigurer {
 	}
 
 	@Bean
-	@ConditionalOnMissingBean(RestOperations.class)
-	public RestTemplate restTemplate(PeltasProperties properties) {
-		RestTemplate restTemplate = new RestTemplate();
-
-		BasicAuth basicAuth = properties.getAuth().getBasic();
-		restTemplate.getInterceptors()
-				.add(new BasicAuthorizationInterceptor(basicAuth.getUsername(), basicAuth.getPassword()));
-
+	@ConditionalOnMissingBean
+	public HttpMessageConverters messageConverters(ObjectProvider<HttpMessageConverter<?>> converters) {
+		return new HttpMessageConverters(converters.orderedStream().collect(Collectors.toList()));
+	}
+	
+	@Bean
+	// @ConditionalOnMissingBean(MappingJackson2HttpMessageConverter.class)
+	public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter() {
 		MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
 		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		converter.setObjectMapper(mapper);
 
-		restTemplate.getMessageConverters().add(0, converter);
+		//getMessageConverters().add(0, converter);
+		return converter;
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(RestOperations.class)
+	@ConditionalOnProperty(value = "peltas.authenticationType", havingValue = "basicauth", matchIfMissing = false)
+	public RestTemplate restTemplateBasicAuth(PeltasProperties properties, HttpMessageConverters converters) {
+		RestTemplate restTemplate = new RestTemplate();
+
+		BasicAuth basicAuth = properties.getAuth().getBasic();
+		restTemplate.getInterceptors()
+				.add(new BasicAuthenticationInterceptor(basicAuth.getUsername(), basicAuth.getPassword()));
+		
+		restTemplate.setMessageConverters(converters.getConverters());
+		return restTemplate;
+	}
+	
+	@Bean
+	@ConditionalOnMissingBean(RestOperations.class)
+	@ConditionalOnProperty(value = "peltas.authenticationType", havingValue = "header", matchIfMissing = false)
+	public RestTemplate restTemplateHeader(PeltasProperties properties, HttpMessageConverters converters) {
+		RestTemplate restTemplate = new RestTemplate();
+
+		Header header = properties.getAuth().getHeader();
+		restTemplate.getInterceptors()
+				.add(new HeaderInterceptor(header.getKey(), header.getValue()));
+		
+		restTemplate.setMessageConverters(converters.getConverters());
 		return restTemplate;
 	}
 
@@ -303,7 +339,7 @@ public class PeltasBatchConfiguration extends BasicBatchConfigurer {
 	@Bean
 	@ConditionalOnMissingBean
 	public Job job(Step step, JobBuilderFactory jobBuilderFactory, JobRepository jobRepository) throws Exception {
-		return jobBuilderFactory.get("peltas.entry").repository(jobRepository).start(step).build();
+		return jobBuilderFactory.get("peltas").repository(jobRepository).start(step).build();
 	}
 
 	@Bean
@@ -312,7 +348,7 @@ public class PeltasBatchConfiguration extends BasicBatchConfigurer {
 			PlatformTransactionManager transactionManager, ItemWriter<PeltasDataHolder> peltasWriter,
 			PeltasItemProcessor peltasProcessor, PeltasListenerAdapter peltasListener, ItemReader<PeltasEntry> reader,
 			PeltasProperties properties) throws Exception {
-		SimpleStepBuilder<PeltasEntry, PeltasDataHolder> builder = stepBuilderFactory.get("peltas.entry")
+		SimpleStepBuilder<PeltasEntry, PeltasDataHolder> builder = stepBuilderFactory.get("peltas")
 				.<PeltasEntry, PeltasDataHolder>chunk(properties.getChunksize()).reader(reader)
 				.processor(peltasProcessor).writer(peltasWriter);
 

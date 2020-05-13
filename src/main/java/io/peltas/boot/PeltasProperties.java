@@ -19,7 +19,6 @@ package io.peltas.boot;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.PropertySource;
 
-import io.peltas.boot.PeltasProperties.Authentication.BasicAuth;
 import io.peltas.boot.PeltasProperties.Ssl.KeystoreType;
 import io.peltas.core.AuthenticationType;
 
@@ -29,7 +28,6 @@ public class PeltasProperties {
 
 	private String host = "http://localhost:8080";
 	private String serviceUrl = "alfresco/service/api/audit/query";
-	private String loginUrl = "alfresco/service/api/login";
 	private String application = "alfresco-access";
 	private String noMatchHandler = "donotprocess";
 	private String timestamp = "database";
@@ -39,7 +37,7 @@ public class PeltasProperties {
 
 	private Ssl ssl;
 
-	private Authentication auth = new Authentication(new BasicAuth(), null);
+	private Authentication auth = new Authentication(new Authentication.BasicAuth(), null, new Authentication.Header());
 
 	public String getHost() {
 		return host;
@@ -55,14 +53,6 @@ public class PeltasProperties {
 
 	public void setServiceUrl(String serviceUrl) {
 		this.serviceUrl = serviceUrl;
-	}
-
-	public String getLoginUrl() {
-		return loginUrl;
-	}
-
-	public void setLoginUrl(String loginUrl) {
-		this.loginUrl = loginUrl;
 	}
 
 	public String getApplication() {
@@ -168,14 +158,16 @@ public class PeltasProperties {
 	public static class Authentication {
 		private BasicAuth basic;
 		private X509 x509;
+		private Header header;
 
 		public Authentication() {
 			super();
 		}
 
-		public Authentication(BasicAuth basic, PeltasProperties.Authentication.X509 x509) {
+		public Authentication(BasicAuth basic, X509 x509, Header header) {
 			this.basic = basic;
 			this.x509 = x509;
+			this.header = header;
 		}
 
 		public BasicAuth getBasic() {
@@ -192,6 +184,14 @@ public class PeltasProperties {
 
 		public void setX509(X509 x509) {
 			this.x509 = x509;
+		}
+
+		public Header getHeader() {
+			return header;
+		}
+
+		public void setHeader(Header header) {
+			this.header = header;
 		}
 
 		public static class BasicAuth {
@@ -212,6 +212,27 @@ public class PeltasProperties {
 
 			public void setPassword(String password) {
 				this.password = password;
+			}
+		}
+
+		public static class Header {
+			private String key = "Authorization";
+			private String value = "Basic YWRtaW46YWRtaW4=";
+
+			public String getKey() {
+				return key;
+			}
+
+			public void setKey(String key) {
+				this.key = key;
+			}
+
+			public String getValue() {
+				return value;
+			}
+
+			public void setValue(String value) {
+				this.value = value;
 			}
 		}
 
