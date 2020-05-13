@@ -56,7 +56,6 @@ import io.peltas.core.expression.PeltasHandlerProperties;
 import io.peltas.core.expression.PipelineCollection;
 import io.peltas.core.integration.PeltasEntryHandler;
 import io.peltas.core.integration.PeltasFormatUtil;
-import io.peltas.core.repository.jdbc.PeltasJdbcWriter;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest

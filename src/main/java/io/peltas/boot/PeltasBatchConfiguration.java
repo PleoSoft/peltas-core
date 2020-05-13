@@ -226,7 +226,7 @@ public class PeltasBatchConfiguration extends BasicBatchConfigurer {
 	public HttpMessageConverters messageConverters(ObjectProvider<HttpMessageConverter<?>> converters) {
 		return new HttpMessageConverters(converters.orderedStream().collect(Collectors.toList()));
 	}
-	
+
 	@Bean
 	// @ConditionalOnMissingBean(MappingJackson2HttpMessageConverter.class)
 	public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter() {
@@ -236,7 +236,7 @@ public class PeltasBatchConfiguration extends BasicBatchConfigurer {
 		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		converter.setObjectMapper(mapper);
 
-		//getMessageConverters().add(0, converter);
+		// getMessageConverters().add(0, converter);
 		return converter;
 	}
 
@@ -249,11 +249,11 @@ public class PeltasBatchConfiguration extends BasicBatchConfigurer {
 		BasicAuth basicAuth = properties.getAuth().getBasic();
 		restTemplate.getInterceptors()
 				.add(new BasicAuthenticationInterceptor(basicAuth.getUsername(), basicAuth.getPassword()));
-		
+
 		restTemplate.setMessageConverters(converters.getConverters());
 		return restTemplate;
 	}
-	
+
 	@Bean
 	@ConditionalOnMissingBean(RestOperations.class)
 	@ConditionalOnProperty(value = "peltas.authenticationType", havingValue = "header", matchIfMissing = false)
@@ -261,9 +261,8 @@ public class PeltasBatchConfiguration extends BasicBatchConfigurer {
 		RestTemplate restTemplate = new RestTemplate();
 
 		Header header = properties.getAuth().getHeader();
-		restTemplate.getInterceptors()
-				.add(new HeaderInterceptor(header.getKey(), header.getValue()));
-		
+		restTemplate.getInterceptors().add(new HeaderInterceptor(header.getKey(), header.getValue()));
+
 		restTemplate.setMessageConverters(converters.getConverters());
 		return restTemplate;
 	}
