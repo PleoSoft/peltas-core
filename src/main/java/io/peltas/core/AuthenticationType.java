@@ -17,5 +17,5 @@
 package io.peltas.core;
 
 public enum AuthenticationType {
-	basicauth, x509
+	basicauth, x509, header
 }
