@@ -90,6 +90,8 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 		}
 		fromTxId = txId.incrementAndGet();
 		toTxId = txId.addAndGet(5);
+		
+		currentMaxTxId = getCurrentMaxTxnId();
 	}
 
 	@Override
@@ -99,7 +101,6 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 
 	@Override
 	public void onOpen() {
-		currentMaxTxId = getCurrentMaxTxnId();
 		lastFromTxId = fromTxId.longValue();
 		// setCurrentItemCount(0);
 		// setMaxItemCount(lastCount > 0 ? lastCount : 1);
@@ -118,7 +119,7 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 			notSorted.sort(new Comparator<AlfrescoNode>() {
 				@Override
 				public int compare(AlfrescoNode m1, AlfrescoNode m2) {
-					if (m1.getTxnId() == m2.getTxnId()) {
+					if (m1.getTxnId().equals(m2.getTxnId())) {
 						return 0;
 					}
 					return m1.getTxnId() > m2.getTxnId() ? 1 : -1;
@@ -161,7 +162,7 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 			return null;
 		}
 
-		if (lastFromTxId == fromTxId.longValue()) {
+		if (lastFromTxId != null && lastFromTxId.equals(fromTxId.longValue())) {
 			return null;
 		}
 
@@ -177,11 +178,14 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 		if (nodes.size() > 0) {
 			retry = true;
 		} else {
-			retry = false;
+			retry = false;			
 			if (currentMaxTxId.longValue() > lastFromTxId.longValue()) {
 				retry = true;
 				fromTxId = txId.incrementAndGet();
 				toTxId = txId.addAndGet(5);
+			} else {
+				currentMaxTxId = getCurrentMaxTxnId();
+				retry = true;
 			}
 			return Collections.emptyList();
 		}
@@ -202,10 +206,15 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 		}
 
 		if (nodesId.size() == 0) {
-			retry = true;
-			fromTxId = txId.incrementAndGet();
-			toTxId = txId.addAndGet(5);
-			return Collections.emptyList();
+			if (currentMaxTxId.longValue() > lastFromTxId.longValue()) {
+				retry = true;
+				fromTxId = txId.incrementAndGet();
+				toTxId = txId.addAndGet(5);
+			} else {
+				currentMaxTxId = getCurrentMaxTxnId();
+				retry = true;
+			}
+			return Collections.emptyList();	
 		}
 
 		Map<Object, Object> map = new HashMap<>();
@@ -350,7 +359,7 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 			return true;
 		}
 
-		if (skipToTxId != null && skipToNodeId != null && skipToTxId == livedataNode.getTxnId()
+		if (skipToTxId != null && skipToNodeId != null && skipToTxId.equals(livedataNode.getTxnId())
 				&& skipToNodeId >= livedataNode.getId()) {
 			return true;
 		}
@@ -362,8 +371,10 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 		url = UriComponentsBuilder.fromHttpUrl(url).queryParam("minTxnId", 1).queryParam("maxResults", 1).toUriString();
 
 		try {
+			LOGGER.trace("Getting MAX transactions from Alfresco/SOLR");
 			ResponseEntity<AlfrescoWorkspaceTxnMetadata> response = getRestTemplate().getForEntity(url,
 					AlfrescoWorkspaceTxnMetadata.class);
+			LOGGER.trace("Received MAX transactions from Alfresco/SOLR");
 			AlfrescoWorkspaceTxnMetadata txnMetadata = response.getBody();
 			return txnMetadata.getMaxTxnId();
 		} catch (RestClientException e) {
