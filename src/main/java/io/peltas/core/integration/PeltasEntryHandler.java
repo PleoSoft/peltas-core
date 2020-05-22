@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.format.support.DefaultFormattingConversionService;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import io.peltas.core.PeltasEntry;
@@ -95,6 +96,22 @@ public class PeltasEntryHandler {
 
 				if ((data.startsWith("\"") && data.endsWith("\"")) || (data.startsWith("'") && data.endsWith("'"))) {
 					value = data.substring(1, data.length() - 1).trim();
+				} else if (data.startsWith("entry:")) {
+					String field = data.substring(6, data.length()).trim();
+					switch (field) {
+					case "time":
+						value = auditEntry.getTime();
+						break;
+					case "id":
+						value = auditEntry.getId();
+						break;
+					case "application":
+						value = auditEntry.getApplication();
+						break;
+					case "user":
+						value = auditEntry.getUser();
+						break;
+					}
 				} else {
 					value = getMappedSingleValueProperty(data, auditEntry);
 				}
@@ -151,7 +168,9 @@ public class PeltasEntryHandler {
 			peltasFormatUtil.setCurrentFormatKeys(formatKeys);
 			LOGGER.trace("convertValue() converting {} -> {} value {} using format {}", value.getClass(), convertClass,
 					value, format);
-			value = conversionService.convert(value, convertClass);
+			if (!Object.class.equals(convertClass)) {
+				value = conversionService.convert(value, convertClass);
+			}
 			LOGGER.trace("convertValue() converted {}", value);
 			peltasFormatUtil.setCurrentFormat(null);
 			peltasFormatUtil.setCurrentFormatKeys(null);

@@ -16,14 +16,32 @@
 
 package io.peltas.boot;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import javax.sql.DataSource;
 
+import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.slf4j.Logger;
@@ -65,13 +83,16 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.format.FormatterRegistry;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.client.support.BasicAuthenticationInterceptor;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -79,6 +100,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.peltas.alfresco.AlfrescoWorkspaceRestReader;
 import io.peltas.boot.PeltasProperties.Authentication.BasicAuth;
 import io.peltas.boot.PeltasProperties.Authentication.Header;
+import io.peltas.boot.PeltasProperties.Authentication.X509;
+import io.peltas.boot.PeltasProperties.Ssl;
+import io.peltas.boot.PeltasProperties.Ssl.KeystoreType;
 import io.peltas.core.PeltasEntry;
 import io.peltas.core.PeltasException;
 import io.peltas.core.StringToMapUtil;
@@ -93,6 +117,7 @@ import io.peltas.core.expression.ContainsPrefixStringExpressionEvaluator;
 import io.peltas.core.expression.EqualsExpressionEvaluator;
 import io.peltas.core.expression.EvaluatorExpressionRegistry;
 import io.peltas.core.http.HeaderInterceptor;
+import io.peltas.core.http.TicketBasicAuthorizationInterceptor;
 import io.peltas.core.integration.DoNotProcessHandler;
 import io.peltas.core.integration.PeltasEntryHandler;
 import io.peltas.core.integration.PeltasFormatUtil;
@@ -106,8 +131,6 @@ import io.peltas.core.repository.TxDataRepository;
 public class PeltasBatchConfiguration extends BasicBatchConfigurer {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PeltasBatchConfiguration.class);
-
-	public static final String AUDIT_ID_SEPARATOR = "___";
 
 	@Value("${peltas.chunksize}")
 	protected Integer chunkSize;
@@ -262,6 +285,125 @@ public class PeltasBatchConfiguration extends BasicBatchConfigurer {
 
 		Header header = properties.getAuth().getHeader();
 		restTemplate.getInterceptors().add(new HeaderInterceptor(header.getKey(), header.getValue()));
+
+		restTemplate.setMessageConverters(converters.getConverters());
+		return restTemplate;
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(RestOperations.class)
+	@ConditionalOnProperty(value = "peltas.authenticationType", havingValue = "headerssl", matchIfMissing = false)
+	public RestTemplate restTemplateHeaderSsl(PeltasProperties properties, HttpMessageConverters converters)
+			throws Throwable {
+
+		Ssl ssl = properties.getSsl();
+		SSLContext sslContext = setupSslContext(ssl).build();
+
+		RestTemplate restTemplate = createSslRestTemplate(sslContext, ssl);
+
+		Header header = properties.getAuth().getHeader();
+		restTemplate.getInterceptors().add(new HeaderInterceptor(header.getKey(), header.getValue()));
+
+		restTemplate.setMessageConverters(converters.getConverters());
+		return restTemplate;
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(RestOperations.class)
+	@ConditionalOnProperty(value = "peltas.authenticationType", havingValue = "alfrescoticketssl", matchIfMissing = false)
+	public RestTemplate restTemplateBasicAuthSsl(PeltasProperties properties, HttpMessageConverters converters)
+			throws Throwable {
+
+		Ssl ssl = properties.getSsl();
+		SSLContext sslContext = setupSslContext(ssl).build();
+
+		RestTemplate restTemplate = createSslRestTemplate(sslContext, ssl);
+
+		BasicAuth basicAuth = properties.getAuth().getBasic();
+		String loginUrl = UriComponentsBuilder.fromHttpUrl(properties.getHost()).path(properties.getLoginUrl()).build()
+				.toString();
+		restTemplate.getInterceptors().add(
+				new TicketBasicAuthorizationInterceptor(basicAuth.getUsername(), basicAuth.getPassword(), loginUrl));
+
+		restTemplate.setMessageConverters(converters.getConverters());
+		return restTemplate;
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(RestOperations.class)
+	@ConditionalOnProperty(value = "peltas.authenticationType", havingValue = "basicauthssl", matchIfMissing = false)
+	public RestTemplate restTemplateAlfrescoTicketSsl(PeltasProperties properties, HttpMessageConverters converters)
+			throws Throwable {
+
+		Ssl ssl = properties.getSsl();
+		SSLContext sslContext = setupSslContext(ssl).build();
+
+		RestTemplate restTemplate = createSslRestTemplate(sslContext, ssl);
+
+		BasicAuth basicAuth = properties.getAuth().getBasic();
+		restTemplate.getInterceptors()
+				.add(new BasicAuthenticationInterceptor(basicAuth.getUsername(), basicAuth.getPassword()));
+
+		restTemplate.setMessageConverters(converters.getConverters());
+		return restTemplate;
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(RestOperations.class)
+	@ConditionalOnProperty(value = "peltas.authenticationType", havingValue = "x509", matchIfMissing = false)
+	public RestTemplate restTemplateX509Ssl(PeltasProperties properties, HttpMessageConverters converters)
+			throws UnrecoverableKeyException, Exception {
+
+		X509 x509props = properties.getAuth().getX509();
+		SSLContextBuilder sslContextBuilder = properties.getSsl() != null ? setupSslContext(properties.getSsl())
+				: new SSLContextBuilder();
+		SSLContext sslContext = sslContextBuilder.setKeyStoreType(x509props.getKeystoreType().toString())
+				.loadKeyMaterial(
+						keyStore(x509props.getKeyStore(), x509props.getKeyStorePass(), x509props.getKeystoreType()),
+						x509props.getKeyStorePass())
+				.build();
+		return createSslRestTemplate(sslContext, properties.getSsl());
+	}
+
+	private KeyStore keyStore(String file, char[] password, KeystoreType keystoreType) throws Exception {
+		KeyStore keyStore = KeyStore.getInstance(keystoreType.toString());
+		File key = ResourceUtils.getFile(file);
+		try (InputStream in = new FileInputStream(key)) {
+			keyStore.load(in, password);
+		}
+		return keyStore;
+	}
+
+	private SSLContextBuilder setupSslContext(Ssl ssl) throws NoSuchAlgorithmException, KeyStoreException,
+			CertificateException, MalformedURLException, IOException {
+		return new SSLContextBuilder().setKeyStoreType(ssl.getKeystoreType().toString())
+				.loadTrustMaterial(new File(ssl.getTrustStore()).toURI().toURL(), ssl.getTrustStorePass());
+	}
+
+	private RestTemplate createSslRestTemplate(SSLContext sslContext, Ssl ssl) {
+		HostnameVerifier hostnameVerifier = null;
+		if (ssl != null && ssl.getHostVerify() == true) {
+			hostnameVerifier = new DefaultHostnameVerifier();
+		} else {
+			hostnameVerifier = new NoopHostnameVerifier();
+		}
+		SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(sslContext, hostnameVerifier);
+		HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(socketFactory).build();
+		HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
+		return new RestTemplate(factory);
+	}
+
+	@Bean
+	@ConditionalOnMissingBean(RestOperations.class)
+	@ConditionalOnProperty(value = "peltas.authenticationType", havingValue = "alfrescoticket", matchIfMissing = false)
+	public RestTemplate restTemplateAlfrescoTicket(PeltasProperties properties, HttpMessageConverters converters) {
+		RestTemplate restTemplate = new RestTemplate();
+
+		BasicAuth basicAuth = properties.getAuth().getBasic();
+		String loginUrl = UriComponentsBuilder.fromHttpUrl(properties.getHost()).path(properties.getLoginUrl()).build()
+				.toString();
+		restTemplate.getInterceptors().add(
+				new TicketBasicAuthorizationInterceptor(basicAuth.getUsername(), basicAuth.getPassword(), loginUrl));
 
 		restTemplate.setMessageConverters(converters.getConverters());
 		return restTemplate;

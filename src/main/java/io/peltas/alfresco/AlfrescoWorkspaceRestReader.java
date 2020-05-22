@@ -45,6 +45,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import io.peltas.boot.PeltasProperties;
 import io.peltas.core.PeltasEntry;
 import io.peltas.core.batch.AbstractPeltasRestReader;
+import io.peltas.core.batch.PeltasProcessor;
 import io.peltas.core.repository.TxDataRepository;
 import io.peltas.core.repository.jpa.PeltasTimestamp;
 
@@ -52,8 +53,6 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 		implements InitializingBean {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AlfrescoWorkspaceRestReader.class);
-
-	public static final String AUDIT_ID_SEPARATOR = "___";
 
 	private final TxDataRepository auditRepository;
 	private final PeltasProperties auditProperties;
@@ -80,7 +79,7 @@ public class AlfrescoWorkspaceRestReader extends AbstractPeltasRestReader<Alfres
 		auditTimeStamp = auditRepository.readTx(getCurrentApplicationName());
 		if (auditTimeStamp != null) {
 			String ref = auditTimeStamp.getRef();
-			String[] split = ref.split(AUDIT_ID_SEPARATOR);
+			String[] split = ref.split(PeltasProcessor.ID_SEPARATOR);
 			String[] tx = split[0].split(";");
 			Long currentTxId = Long.valueOf(tx[0]);
 			txId.set(currentTxId - 1);

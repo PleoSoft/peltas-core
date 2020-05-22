@@ -28,6 +28,7 @@ public class PeltasProperties {
 
 	private String host = "http://localhost:8080";
 	private String serviceUrl = "alfresco/service/api/audit/query";
+	private String loginUrl = "alfresco/api/-default-/public/authentication/versions/1/tickets";
 	private String application = "alfresco-access";
 	private String noMatchHandler = "donotprocess";
 	private String timestamp = "database";
@@ -109,6 +110,14 @@ public class PeltasProperties {
 
 	public void setChunksize(Integer chunksize) {
 		this.chunksize = chunksize;
+	}
+	
+	public String getLoginUrl() {
+		return loginUrl;
+	}
+	
+	public void setLoginUrl(String loginUrl) {
+		this.loginUrl = loginUrl;
 	}
 
 	public static class Ssl {

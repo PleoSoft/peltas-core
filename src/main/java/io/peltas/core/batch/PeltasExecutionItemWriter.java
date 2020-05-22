@@ -50,7 +50,8 @@ public class PeltasExecutionItemWriter<I, C> implements ItemWriter<PeltasDataHol
 			List<String> executions = item.getConfig().getPipeline().getExecutions();
 
 			for (String executionKey : executions) {
-				LOGGER.trace("item: {} - executionKey: {}", item.getAuditEntry().getId(), executionKey);
+				LOGGER.trace("item: {} - executionKey: {} for handler {}", item.getAuditEntry().getId(), executionKey,
+						item.getConfig().getHandlerName());
 				itemExecution(executionKey, parameterSourceMap, item);
 			}
 
@@ -71,8 +72,9 @@ public class PeltasExecutionItemWriter<I, C> implements ItemWriter<PeltasDataHol
 									collectionValue);
 
 							for (String executionKey : collectionExecutions) {
-								LOGGER.trace("collection: {} - item: {} - executionKey: {}", collectionKey,
-										item.getAuditEntry().getId(), executionKey);
+								LOGGER.trace("collection: {} - item: {} - executionKey: {} for handler {}",
+										collectionKey, item.getAuditEntry().getId(), executionKey,
+										item.getConfig().getHandlerName());
 								collectionExecution(executionKey, parameters, item);
 							}
 						}
