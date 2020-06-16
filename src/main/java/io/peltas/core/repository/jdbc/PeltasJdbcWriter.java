@@ -153,14 +153,12 @@ public class PeltasJdbcWriter extends PeltasExecutionItemWriter<MapSqlParameterS
 
 		MapSqlParameterSource parameterSourceMap = new MapSqlParameterSource();
 
-		// TODO FIXME: getUserFullname ?
-//		ImmutableMap<String, ? extends Object> auditMap = ImmutableMap.of("audit.id", auditEntry.getId(), "audit.user",
-//				auditEntry.getUser(), "audit.userfull", auditEntry.getUserFullname(), "audit.time",
-//				auditEntry.getTime());
-
 		Map<String, Object> auditMap = new HashMap<>();
 		auditMap.put("audit.id", auditEntry.getId());
 		auditMap.put("audit.user", auditEntry.getUser());
+		if (auditEntry.getCreatedByUser() != null) {
+			auditMap.put("audit.userdisplayname", auditEntry.getCreatedByUser().getDisplayName());
+		}
 		auditMap.put("audit.time", auditEntry.getTime());
 
 		parameterSourceMap.addValues(builder);

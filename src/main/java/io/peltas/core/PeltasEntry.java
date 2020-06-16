@@ -21,6 +21,7 @@ import java.sql.Timestamp;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonSerialize
@@ -42,6 +43,9 @@ public class PeltasEntry implements Serializable {
 
 	@JsonAlias({ "values" })
 	private Map<String, Object> values;
+
+	@JsonProperty("createdByUser")
+	private CreatedBy createdByUser;
 
 	public String getUser() {
 		return user;
@@ -83,10 +87,44 @@ public class PeltasEntry implements Serializable {
 		this.time = time;
 	}
 
+	public CreatedBy getCreatedByUser() {
+		if (createdByUser == null) {
+			return new CreatedBy();
+		}
+		return createdByUser;
+	}
+
+	public void setCreatedByUser(CreatedBy createdByUser) {
+		if (createdByUser != null && this.user == null) {
+			this.user = createdByUser.id;
+		}
+		this.createdByUser = createdByUser;
+	}
+
 	@Override
 	public String toString() {
 		return "PeltasEntry [id=" + id + ", application=" + application + ", time=" + time + ", user=" + user
 				+ ", values=" + values + "]";
 	}
 
+	public static class CreatedBy {
+		private String id;
+		private String displayName;
+
+		public String getId() {
+			return id;
+		}
+
+		public void setId(String id) {
+			this.id = id;
+		}
+
+		public String getDisplayName() {
+			return displayName;
+		}
+
+		public void setDisplayName(String displayName) {
+			this.displayName = displayName;
+		}
+	}
 }
