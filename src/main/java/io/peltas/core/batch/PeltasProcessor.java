@@ -18,7 +18,7 @@ package io.peltas.core.batch;
 
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +39,7 @@ public class PeltasProcessor extends PeltasItemProcessor {
 
 	private final String applicationName;
 	private final TxDataRepository auditRepository;
-	private final AtomicInteger counter = new AtomicInteger(0);
+	private final AtomicLong counter = new AtomicLong(0);
 	private PeltasEntry lastAuditEntry;
 	private final PeltasListenerAdapter peltasListenerAdapter;
 
@@ -72,7 +72,7 @@ public class PeltasProcessor extends PeltasItemProcessor {
 		PeltasTimestamp timestamp = auditRepository.readTx(getCurrentApplicationName());
 		if (timestamp != null) {
 			String[] auditIdSplitted = timestamp.getRef().split(ID_SEPARATOR);
-			Integer nodesCount = nodesCountToInteger(auditIdSplitted[1]);
+			Long nodesCount = nodesCountToInteger(auditIdSplitted[1]);
 			checkNodesCount(nodesCount);
 		}
 
@@ -81,22 +81,18 @@ public class PeltasProcessor extends PeltasItemProcessor {
 		}
 	}
 
-	protected void checkNodesCount(Integer nodesCount) {
-
+	protected void checkNodesCount(Long nodesCount) {
 	}
 
 	protected void onAfterWrite(List<PeltasDataHolder> items, ChunkContext currentChunkContext) {
 		PeltasTimestamp timestamp = (PeltasTimestamp) currentChunkContext.getAttribute("peltasTimestamp");
 		if (timestamp == null) {
-			String newRef = "1" + ID_SEPARATOR + nodesCountToString(0);
+			String newRef = "1" + ID_SEPARATOR + nodesCountToString(0L);
 			timestamp = new PeltasTimestamp(getCurrentApplicationName(), newRef, new Date());
 		}
-
-		String[] auditIdSplitted = timestamp.getRef().split(ID_SEPARATOR);
-		Integer nodesCount = nodesCountToInteger(auditIdSplitted[1]);
-		Integer processed = nodesCount + counter.get();
+		
 		// todo use string builder
-		String newRef = getCurrentRef() + ID_SEPARATOR + nodesCountToString(processed);
+		String newRef = getCurrentRef() + ID_SEPARATOR + nodesCountToString(counter.get());
 		timestamp.setRef(newRef);
 		PeltasTimestamp peltasTimestamp = auditRepository.writeTx(timestamp);
 		currentChunkContext.setAttribute("peltasTimestamp", peltasTimestamp != null ? peltasTimestamp : timestamp);
@@ -106,12 +102,12 @@ public class PeltasProcessor extends PeltasItemProcessor {
 		return lastAuditEntry.getId();
 	}
 
-	protected String nodesCountToString(Integer nodesCount) {
+	protected String nodesCountToString(Long nodesCount) {
 		return nodesCount.toString();
 	}
 
-	protected Integer nodesCountToInteger(String nodesCount) {
-		return Integer.valueOf(nodesCount);
+	protected Long nodesCountToInteger(String nodesCount) {
+		return Long.valueOf(nodesCount);
 	}
 
 	public String getCurrentApplicationName() {
